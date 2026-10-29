@@ -50,6 +50,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -144,7 +145,7 @@ class MainActivity : ComponentActivity() {
         store = MirrorStore(this)
         settings = SettingsStore(this)
         voiceKeys = VoiceKeyStore(this)
-        tts = TtsManager(this, { settings.speed }, { voiceKeys.get() })
+        tts = TtsManager(this, { settings.speed }, { voiceKeys.get() }, { settings.voice })
         setContent {
             AulaTheme {
                 AulaApp(store = store, settings = settings, tts = tts, voiceKeys = voiceKeys)
@@ -1112,16 +1113,31 @@ private fun distractFor(item: Cognate, seed: Int): List<Cognate> {
 
 /** La profesora's face, small and round, for her cards and strips. */
 @Composable
-fun TeacherAvatar(size: Dp = 56.dp) {
-    Image(
-        painter = painterResource(R.drawable.mouth_rest),
-        contentDescription = "La profesora",
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .border(2.dp, Terracotta, CircleShape),
-        contentScale = ContentScale.Crop
-    )
+fun TeacherAvatar(tts: TtsManager, size: Dp = 56.dp) {
+    val speaking by tts.speaking.collectAsState()
+    var flapOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(speaking) {
+        if (speaking) {
+            while (true) {
+                delay(190)
+                flapOpen = !flapOpen
+            }
+        } else {
+            flapOpen = false
+        }
+    }
+    val res = if (speaking && flapOpen) R.drawable.mouth_relaxed else R.drawable.mouth_rest
+    Crossfade(targetState = res, animationSpec = tween(80), label = "teacherTalk") { r ->
+        Image(
+            painter = painterResource(r),
+            contentDescription = "La profesora",
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .border(2.dp, if (speaking) Terracotta else JournalLine, CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    }
 }
 
 /**
@@ -1134,7 +1150,7 @@ fun TeacherAvatar(size: Dp = 56.dp) {
 fun TeacherStrip(lineEs: String, lineEn: String?, tts: TtsManager) {
     JournalCard(oliveCard = true) {
         Row(verticalAlignment = Alignment.Top) {
-            TeacherAvatar(52.dp)
+            TeacherAvatar(tts, 52.dp)
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text("La profesora", fontWeight = FontWeight.Bold, color = TerracottaDeep)
@@ -1259,7 +1275,7 @@ fun HoyScreen(
         if (!started) {
             JournalCard(oliveCard = true) {
                 Row(verticalAlignment = Alignment.Top) {
-                    TeacherAvatar(84.dp)
+                    TeacherAvatar(tts, 84.dp)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -2266,6 +2282,30 @@ fun AjustesScreen(
                 Spacer(Modifier.height(10.dp))
                 FeedbackBox(it, good = true)
             }
+            val cloudState by tts.cloudStatus.collectAsState()
+            Spacer(Modifier.height(10.dp))
+            NoteText("Estado de la voz IA: $cloudState")
+            Spacer(Modifier.height(10.dp))
+            Text("Su voz (Chirp 3 HD):", fontWeight = FontWeight.Bold)
+            val voiceOptions = listOf(
+                "en-US-Chirp3-HD-Aoede" to "Aoede · cálida, de profesora",
+                "en-US-Chirp3-HD-Kore" to "Kore · clara y firme",
+                "en-US-Chirp3-HD-Zephyr" to "Zephyr · suave y ligera",
+                "en-US-Chirp3-HD-Leda" to "Leda · joven",
+                "en-US-Chirp3-HD-Charon" to "Charon · la voz de PuenteLingua"
+            )
+            var chosenVoice by remember { mutableStateOf(settings.voice) }
+            voiceOptions.forEach { (id, label) ->
+                TextButton(onClick = {
+                    chosenVoice = id
+                    settings.voice = id
+                    tts.onKeyChanged()
+                    tts.speak("Hello! I am your teacher. Let's practice English together.", slow = false)
+                }) {
+                    Text((if (chosenVoice == id) "◉ " else "○ ") + label, color = TerracottaDeep)
+                }
+            }
+            NoteText("Toca una voz para oírla al momento y dejarla elegida.")
         }
         Spacer(Modifier.height(14.dp))
 
@@ -2304,7 +2344,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.4", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.5", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. La grabación de tu voz (Copia) llega en una próxima versión.")
         }
