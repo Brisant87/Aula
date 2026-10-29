@@ -701,7 +701,6 @@ fun MouthCanvas(shape: MouthShape, modifier: Modifier = Modifier) {
  * word (one combined "Escuchar y ver" button), and the learner self-rates.
  * Ratings log pronunciation:<word> events; "Casi" logs nothing, like the web app.
  */
-@Composable
 /**
  * The teacher's face: AI-generated 3D-style artwork, one pose per mouth
  * shape, crossfaded so switching poses reads as movement. The "open"
@@ -731,6 +730,7 @@ fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
 fun GuideCard(
     wordKey: String,
     context: String,
