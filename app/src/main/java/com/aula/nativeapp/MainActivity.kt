@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -55,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -132,15 +134,17 @@ class MainActivity : ComponentActivity() {
     private lateinit var store: MirrorStore
     private lateinit var settings: SettingsStore
     private lateinit var tts: TtsManager
+    private lateinit var voiceKeys: VoiceKeyStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         store = MirrorStore(this)
         settings = SettingsStore(this)
-        tts = TtsManager(this) { settings.speed }
+        voiceKeys = VoiceKeyStore(this)
+        tts = TtsManager(this, { settings.speed }, { voiceKeys.get() })
         setContent {
             AulaTheme {
-                AulaApp(store = store, settings = settings, tts = tts)
+                AulaApp(store = store, settings = settings, tts = tts, voiceKeys = voiceKeys)
             }
         }
     }
@@ -163,7 +167,7 @@ private val TABS = listOf(
 )
 
 @Composable
-fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager) {
+fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager, voiceKeys: VoiceKeyStore) {
     var tab by remember { mutableStateOf("hoy") }
     var tick by remember { mutableStateOf(0) }
     val bump: () -> Unit = { tick++ }
@@ -201,7 +205,7 @@ fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager) {
                 "conversaciones" -> ConversacionesScreen(store, settings, tts, bump)
                 "biblioteca" -> BibliotecaScreen(store, settings, tts, bump)
                 "camino" -> CaminoScreen(store, settings, tts, bump)
-                "ajustes" -> AjustesScreen(store, settings, bump)
+                "ajustes" -> AjustesScreen(store, settings, voiceKeys, tts, bump)
             }
         }
     }
@@ -1970,9 +1974,13 @@ fun CaminoScreen(
 fun AjustesScreen(
     store: MirrorStore,
     settings: SettingsStore,
+    voiceKeys: VoiceKeyStore,
+    tts: TtsManager,
     bump: () -> Unit
 ) {
     var speed by remember { mutableStateOf(settings.speed) }
+    var keyText by remember { mutableStateOf(voiceKeys.get()) }
+    var keyStatus by remember { mutableStateOf<String?>(null) }
     var guideOn by remember { mutableStateOf(settings.guide) }
     var showReset by remember { mutableStateOf(false) }
     var resetDone by remember { mutableStateOf(false) }
@@ -1983,12 +1991,12 @@ fun AjustesScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        ViewTitle("Ajustes", "Todo vive en este teléfono. Nada sale de aquí: sin cuentas, sin nube, sin registro.")
+        ViewTitle("Ajustes", "Tu diario vive en este teléfono: sin cuentas ni registro. La única excepción, solo si tú la activas: la voz IA usa tu propia clave de Google para hablar.")
 
         JournalCard {
             Stamp("La voz", olive = true)
             Spacer(Modifier.height(8.dp))
-            Text("La voz es la de tu teléfono (motor de Google, si está instalado).", style = MaterialTheme.typography.titleMedium)
+            Text("Sin clave IA, la voz es la de tu teléfono (motor de Google, si está instalado).", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             Text("Velocidad de la voz: ${"%.2f".format(speed)}×")
             Slider(
@@ -2001,6 +2009,56 @@ fun AjustesScreen(
                 steps = 5
             )
             NoteText("0.70× es muy lenta, para oír cada sonido; 1.30× es conversación real.")
+        }
+        Spacer(Modifier.height(14.dp))
+
+        JournalCard {
+            Stamp("Voz de la profesora · IA", olive = true)
+            Spacer(Modifier.height(8.dp))
+            Text("Una voz de IA natural (Google Chirp), como en PuenteLingua", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
+            NoteText("Pega tu clave de Google Cloud una sola vez: queda cifrada en este teléfono, fuera de las copias de seguridad, y se usa solo para dar voz a las frases en inglés. Cada frase que ya sonó queda guardada en el teléfono, así que repetirla es instantáneo y no gasta nada. Sin clave —o sin conexión— la app usa la voz del teléfono, como hasta ahora.")
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(
+                value = keyText,
+                onValueChange = { keyText = it },
+                label = { Text("Tu clave de Google Cloud") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PrimaryButton("Guardar clave", modifier = Modifier.weight(1f)) {
+                    voiceKeys.set(keyText)
+                    tts.onKeyChanged()
+                    keyStatus = if (voiceKeys.has()) {
+                        "Clave guardada en este teléfono. Pulsa «Probar voz»: si suena ella, la voz IA está activa."
+                    } else {
+                        "No se pudo guardar la clave en este teléfono."
+                    }
+                }
+                GhostButton("Probar voz", modifier = Modifier.weight(1f)) {
+                    tts.speak("Hello! I am your teacher. Let's practice English together.", slow = false)
+                    keyStatus = "Escucha: una voz nueva y natural es la IA; la de siempre es la del teléfono."
+                }
+            }
+            if (voiceKeys.has()) {
+                Spacer(Modifier.height(8.dp))
+                GhostButton("Borrar clave", modifier = Modifier.fillMaxWidth()) {
+                    voiceKeys.clear()
+                    keyText = ""
+                    tts.onKeyChanged()
+                    keyStatus = "Clave borrada. La app vuelve a la voz del teléfono."
+                }
+            }
+            keyStatus?.let {
+                Spacer(Modifier.height(10.dp))
+                FeedbackBox(it, good = true)
+            }
         }
         Spacer(Modifier.height(14.dp))
 
@@ -2039,9 +2097,9 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.1", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.3", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            NoteText("Versión nativa inicial: misma evidencia, mismas reglas, sin conexión a internet. La voz en la nube y la grabación de tu voz (Copia) llegan en versiones futuras.")
+            NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. La grabación de tu voz (Copia) llega en una próxima versión.")
         }
     }
 
