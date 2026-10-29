@@ -2,6 +2,7 @@ package com.aula.nativeapp
 
 import android.os.Bundle
 import android.speech.tts.UtteranceProgressListener
+import java.util.Calendar
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,6 +49,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -71,6 +73,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
@@ -1106,6 +1109,64 @@ private fun distractFor(item: Cognate, seed: Int): List<Cognate> {
 // ------------------------------------------------------------------ HOY
 
 @Composable
+// ------------------------------------------------------------------ LA PROFESORA
+
+/** La profesora's face, small and round, for her cards and strips. */
+@Composable
+fun TeacherAvatar(size: Dp = 56.dp) {
+    Image(
+        painter = painterResource(R.drawable.mouth_rest),
+        contentDescription = "La profesora",
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .border(2.dp, Terracotta, CircleShape),
+        contentScale = ContentScale.Crop
+    )
+}
+
+/**
+ * Her voice in the experience: a written explanation in Spanish (the
+ * learner's language) plus, when [lineEn] is present, a short spoken
+ * line in simple English — she teaches BY speaking English, and
+ * explains in Spanish. The learner can replay her line with the button.
+ */
+@Composable
+fun TeacherStrip(lineEs: String, lineEn: String?, tts: TtsManager) {
+    JournalCard(oliveCard = true) {
+        Row(verticalAlignment = Alignment.Top) {
+            TeacherAvatar(52.dp)
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text("La profesora", fontWeight = FontWeight.Bold, color = TerracottaDeep)
+                Spacer(Modifier.height(2.dp))
+                Text(lineEs, style = MaterialTheme.typography.bodyMedium)
+            }
+            if (lineEn != null) {
+                TextButton(onClick = { tts.speak(lineEn, slow = false) }) {
+                    Text("🔊", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+        }
+    }
+}
+
+/** 6 curriculum doubts, answered by the teacher in plain Spanish. */
+val TEACHER_FAQ: List<Pair<String, String>> = listOf(
+    "¿Por qué hay pruebas con cosas que nunca practiqué?" to
+        "Porque acertar lo practicado solo prueba memoria. La transferencia —usar lo aprendido en una frase nueva— es la prueba honesta de que el patrón ya es tuyo. Por eso solo la transferencia mueve un patrón a Mejorando y Dominado.",
+    "¿Por qué mi Espejo no nombra mi error de ayer?" to
+        "Un error solo es mala suerte; un patrón es otra cosa. El Espejo espera al menos 3 errores en 2 actividades distintas antes de nombrar algo, para no perseguirte por casualidades.",
+    "¿Qué significa Dominado?" to
+        "Que superaste la transferencia en dos días distintos. Y ni así me fío del todo: a los 3 días te hago un repaso sorpresa, y si ya no está, el patrón vuelve a Mejorando sin castigo.",
+    "¿Por qué a veces no veo la respuesta correcta antes de intentar?" to
+        "Porque si te la enseño primero, tu cerebro la reconoce pero no la construye. Primero intentas tú; mi retroalimentación señala tu primer error real, y la frase completa llega después de tu intento.",
+    "¿Y si un patrón no es mi problema?" to
+        "En tu Espejo puedes decir «No es mi problema» en cualquier patrón. Desaparece de tu clase y de tu Camino. Tú mandas sobre tu diario.",
+    "¿La voz de la IA gasta mucho?" to
+        "Cada frase se pide una sola vez y queda guardada en tu teléfono: repetirla es gratis e instantáneo, incluso sin conexión. Sin tu clave, la app usa la voz del teléfono y todo sigue funcionando."
+)
+
 fun HoyScreen(
     store: MirrorStore,
     settings: SettingsStore,
@@ -1181,6 +1242,9 @@ fun HoyScreen(
 
     var started by remember { mutableStateOf(false) }
     var phase by remember { mutableStateOf(0) }
+    var guided by remember { mutableStateOf(false) }
+    var teacherVoice by remember { mutableStateOf(true) }
+    var sessionStart by remember { mutableStateOf(0) }
     fun advance() {
         phase++
     }
@@ -1193,18 +1257,75 @@ fun HoyScreen(
     ) {
         ViewTitle("Hoy", Dates.label() + " · una página nueva de tu diario.")
         if (!started) {
-            JournalCard {
+            JournalCard(oliveCard = true) {
+                Row(verticalAlignment = Alignment.Top) {
+                    TeacherAvatar(84.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                        val greeting = when {
+                            hour < 13 -> "Buenos días"
+                            hour < 20 -> "Buenas tardes"
+                            else -> "Buenas noches"
+                        }
+                        Text("La profesora", style = MaterialTheme.typography.titleLarge, color = TerracottaDeep)
+                        Text("$greeting. Este es tu plan de hoy:", fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                if (retentionKey != null) {
+                    Text("· Empezamos con un repaso sorpresa: ${patternInfo(retentionKey).name}. Ya lo dominabas; hoy confirmamos que sigue ahí.")
+                    Spacer(Modifier.height(4.dp))
+                }
                 if (hasActive) {
-                    Text("Patrón de hoy: ${info.name}.", fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Tu Espejo lo está mirando, así que la clase de hoy lo trabaja primero.")
+                    Text("· Patrón de hoy: ${info.name}. ${info.explain}")
                 } else {
-                    Text("Enfoque de hoy: ${plan.label} (día ${(di % 7) + 1} de la rotación semanal).", fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(4.dp))
-                    NoteText("Tu Espejo todavía no nombra patrones activos: necesita evidencia repetida, no un solo error.")
+                    Text("· Enfoque de hoy: ${plan.label} (día ${(di % 7) + 1} de la rotación semanal). Tu Espejo aún no nombra patrones: necesita evidencia repetida, no un solo error.")
+                }
+                Spacer(Modifier.height(4.dp))
+                val nextLevel = LEVELS.firstOrNull { !store.camino.contains(it.id) }
+                if (nextLevel != null) {
+                    Text("· Tu Camino: ${store.camino.size} de ${LEVELS.size} niveles. El siguiente paso, cuando tú quieras: Nivel ${nextLevel.n} · ${nextLevel.title}.")
+                } else {
+                    Text("· Tu Camino está completo: los ${LEVELS.size} niveles son tuyos.")
                 }
                 Spacer(Modifier.height(12.dp))
-                PrimaryButton("Empezar la clase de hoy →") { started = true }
+                PrimaryButton("▶ Empezar con la profesora", modifier = Modifier.fillMaxWidth()) {
+                    guided = true
+                    sessionStart = store.events.size
+                    started = true
+                    if (teacherVoice) tts.speak("Hello! I am your teacher. Let's start today's lesson.", slow = false)
+                }
+                Spacer(Modifier.height(8.dp))
+                GhostButton("Por mi cuenta", modifier = Modifier.fillMaxWidth()) {
+                    guided = false
+                    sessionStart = store.events.size
+                    started = true
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(checked = teacherVoice, onCheckedChange = { teacherVoice = it })
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("Su voz durante la clase", fontWeight = FontWeight.Bold)
+                        NoteText("Te habla en inglés sencillo en cada paso; sus explicaciones van por escrito, en español.")
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            JournalCard {
+                Stamp("Pregúntale a la profesora", olive = true)
+                Spacer(Modifier.height(8.dp))
+                var openFaq by remember { mutableStateOf<Int?>(null) }
+                TEACHER_FAQ.forEachIndexed { i, qa ->
+                    TextButton(onClick = { openFaq = if (openFaq == i) null else i }) {
+                        Text((if (openFaq == i) "▾ " else "▸ ") + qa.first, color = TerracottaDeep)
+                    }
+                    if (openFaq == i) {
+                        Text(qa.second, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(6.dp))
+                    }
+                }
             }
             Spacer(Modifier.height(14.dp))
             JournalCard {
@@ -1232,6 +1353,41 @@ fun HoyScreen(
             }
             NoteText("Paso ${phase + 1} de ${steps.size} · $label")
             Spacer(Modifier.height(10.dp))
+            if (guided) {
+                val guidance: Pair<String, String?> = when {
+                    step.startsWith("recall") ->
+                        "Calentamiento: dos palabras para despertar la memoria. Sin presión: esto no es un examen." to
+                            "Warm up! Words you know."
+                    step.startsWith("syntax") ->
+                        "Tu turno de construir. Ordena la frase; si te equivocas, te señalo tu primer error, no el último." to
+                            "Your turn! Build the sentence."
+                    step.startsWith("cog") ->
+                        "Cognados: palabras que viajan entre el español y el inglés. Tu trabajo es reconocerlas." to
+                            "Cognates! Traveling words."
+                    step.startsWith("lis") ->
+                        "Escucha primero y lee después: en inglés real, el oído manda." to
+                            "Listen carefully. What do you hear?"
+                    step == "guide" ->
+                        "Este sonido se aprende con los ojos: mira mi boca, escucha el modelo y cópialo en voz alta." to
+                            "Watch my mouth. Copy the sound."
+                    step == "transfer" ->
+                        "Ahora algo NUEVO, que no has practicado. Esto es lo que cuenta de verdad: si sale, tu patrón avanza." to
+                            "Now something new. Show me!"
+                    step == "retention" ->
+                        "Repaso sorpresa: esto ya era tuyo. Confirmemos que sigue ahí." to
+                            "Surprise review! Is it still there?"
+                    else ->
+                        "Página completa. Esto es lo que pasó hoy, sin adornos:" to
+                            "Great work today! See you tomorrow."
+                }
+                LaunchedEffect(step) {
+                    if (teacherVoice && guidance.second != null) {
+                        tts.speak(guidance.second!!, slow = false)
+                    }
+                }
+                TeacherStrip(guidance.first, guidance.second, tts)
+                Spacer(Modifier.height(10.dp))
+            }
             key(step + phase) {
                 when {
                     step == "recall1" -> RecallQuestion(wc1, distractFor(wc1, di + 1), "hoy", store, bump) { advance() }
@@ -1268,6 +1424,27 @@ fun HoyScreen(
                             Text("Clase de hoy, terminada ✎", style = MaterialTheme.typography.titleLarge)
                             Spacer(Modifier.height(6.dp))
                             Text("Tus respuestas quedaron en tu diario. El Espejo solo nombrará un patrón cuando haya evidencia repetida en varias actividades — nunca por un solo error.")
+                            if (guided) {
+                                val slice = store.events.drop(sessionStart)
+                                val okCount = slice.count { it.correct }
+                                Spacer(Modifier.height(8.dp))
+                                Text("La profesora resume: hoy registré ${slice.size} respuestas tuyas, $okCount correctas.", fontWeight = FontWeight.Bold)
+                                val stNow = store.statusOf(focusKey)
+                                val stLabel = when (stNow) {
+                                    "dominado" -> "Dominado"
+                                    "mejorando" -> "Mejorando"
+                                    else -> "Activo"
+                                }
+                                Text("Tu patrón de hoy (${info.name}) quedó en estado: $stLabel.")
+                                if (retentionKey != null) {
+                                    if (store.statusOf(retentionKey) == "dominado") {
+                                        Text("El repaso sorpresa confirmó que ${patternInfo(retentionKey).name} sigue ahí.")
+                                    } else {
+                                        Text("El repaso sorpresa devolvió ${patternInfo(retentionKey).name} a Mejorando: volverá a salir en tu práctica, sin castigo.")
+                                    }
+                                }
+                                Text("Mañana sigo desde aquí: tu diario recuerda dónde quedamos.")
+                            }
                             Spacer(Modifier.height(12.dp))
                             Row {
                                 PrimaryButton("Ver mi Espejo →", olive = true) { goEspejo() }
@@ -1279,6 +1456,16 @@ fun HoyScreen(
                             }
                         }
                     }
+                }
+            }
+            if (step != "fin") {
+                Spacer(Modifier.height(6.dp))
+                TextButton(onClick = {
+                    tts.stop()
+                    started = false
+                    phase = 0
+                }) {
+                    Text("Terminar la clase aquí", color = TerracottaDeep)
                 }
             }
         }
@@ -1543,6 +1730,12 @@ fun ConversacionesScreen(
             .padding(16.dp)
     ) {
         ViewTitle("Conversaciones", "Escenas cortas de la vida real. Tú eliges las respuestas; el inglés te responde de verdad.")
+        TeacherStrip(
+            "Elige una escena y practica en voz alta. Yo escucho en silencio y anoto tus patrones en tu diario: nunca te interrumpo a mitad de frase.",
+            "Let's talk! Choose a conversation.",
+            tts
+        )
+        Spacer(Modifier.height(12.dp))
 
         val cid = convId
         if (cid != null) {
@@ -1846,6 +2039,20 @@ fun CaminoScreen(
     ) {
         ViewTitle("Camino", "Cuatro niveles, en orden. Cada prueba usa ítems que nunca has visto: pasarla es la prueba de que el nivel es tuyo.")
 
+        val lidNow = levelId
+        if (lidNow == null) {
+            TeacherStrip(
+                if (store.camino.isEmpty()) {
+                    "Este es el mapa de tu curso: cuatro niveles, en orden. Cada prueba usa frases que nunca has visto — pasarla es la prueba honesta de que el nivel es tuyo."
+                } else {
+                    "Llevas ${store.camino.size} de ${LEVELS.size} niveles. El siguiente te espera cuando quieras: sin prisa, sin rachas falsas y sin castigo."
+                },
+                "This is your map. Step by step!",
+                tts
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+
         val lid = levelId
         if (lid == null) {
             JournalCard(oliveCard = true) {
@@ -2097,7 +2304,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.3", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.4", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. La grabación de tu voz (Copia) llega en una próxima versión.")
         }
