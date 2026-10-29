@@ -1108,7 +1108,6 @@ private fun distractFor(item: Cognate, seed: Int): List<Cognate> {
 
 // ------------------------------------------------------------------ HOY
 
-@Composable
 // ------------------------------------------------------------------ LA PROFESORA
 
 /** La profesora's face, small and round, for her cards and strips. */
@@ -1167,6 +1166,7 @@ val TEACHER_FAQ: List<Pair<String, String>> = listOf(
         "Cada frase se pide una sola vez y queda guardada en tu teléfono: repetirla es gratis e instantáneo, incluso sin conexión. Sin tu clave, la app usa la voz del teléfono y todo sigue funcionando."
 )
 
+@Composable
 fun HoyScreen(
     store: MirrorStore,
     settings: SettingsStore,
