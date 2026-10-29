@@ -2,4 +2,6 @@
 <full-backup-content>
     <!-- The learner's journal (mirror store + settings) is ordinary app data. -->
     <include domain="sharedpref" path="." />
+    <!-- The encrypted Google voice key NEVER leaves the device. -->
+    <exclude domain="sharedpref" path="aula_voice_key.xml" />
 </full-backup-content>
