@@ -2,7 +2,7 @@
 
 A faithful first native version of the Aula web app (WebView source of truth:
 `~/workspace/aula-apk/app-assets/index.html`), written in Kotlin + Jetpack
-Compose. Package name **`com.aula.native`** — deliberately distinct from the
+Compose. Package name **`com.aula.nativeapp`** — deliberately distinct from the
 WebView app's `com.aula.app`, so both can live on the same phone during the
 transition.
 
@@ -112,7 +112,7 @@ three) with full step captions, 3 conversations, all 6 listening items
 4. When the run finishes, open it and download the artifact named
    **`aula-native-debug-apk`** — it contains `app-debug.apk`.
 5. Install `app-debug.apk` on the phone (it coexists with the WebView Aula:
-   different package, `com.aula.native`).
+   different package, `com.aula.nativeapp`).
 
 Local build (optional): install an Android SDK (platform 36, build-tools
 36.0.0), write `sdk.dir=...` into `local.properties`, generate the keystore
