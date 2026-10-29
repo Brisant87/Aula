@@ -3,7 +3,18 @@ package com.aula.nativeapp
 import android.content.Context
 import android.content.SharedPreferences
 import android.speech.tts.TextToSpeech
+import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
+import android.util.Base64
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import org.json.JSONArray
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import java.security.MessageDigest
+import java.util.concurrent.Executors
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -22,7 +33,9 @@ import java.util.Locale
  *  - A Dominado pattern left unconfirmed for >= 3 days is "retention due";
  *    a failed retention check sends it back to Mejorando with its hint.
  * Storage is SharedPreferences-held JSON (like the web app's localStorage),
- * so no database or network is involved. No Firebase, no AI APIs, ever.
+ * so no database or network is involved in the learning engine. No Firebase and no Gemini, ever.
+ * The one optional network feature is the cloud VOICE with the learner's own Google key
+ * (Brian's standing pattern from PuenteLingua/Cognata) — see TtsManager.
  */
 
 object Dates {
@@ -392,14 +405,105 @@ fun convForPattern(key: String): String = when (key) {
 // ---------------------------------------------------------------- voice
 
 /**
- * Device voice with the Samsung fix: try to initialize Android TextToSpeech
- * with the Google engine ("com.google.android.tts") FIRST, because the system
- * default engine fails silently on many Samsung Galaxy setups. If the Google
- * engine cannot initialize, fall back to the default engine.
- *
- * No cloud voice and no API keys in the native scaffold: device TTS only.
+ * The learner's own Google Cloud voice key, encrypted on the device
+ * (Android Keystore) and excluded from backup/transfer in the XML rules.
+ * Every failure falls back to "no key" (device voice): a corrupt
+ * encrypted store must never crash the app at startup.
  */
-class TtsManager(context: Context, private val speedProvider: () -> Float) {
+class VoiceKeyStore(context: Context) {
+
+    private val appContext: Context = context.applicationContext
+
+    @Volatile
+    private var prefs: SharedPreferences? = null
+
+    @Volatile
+    private var broken = false
+
+    private fun prefs(): SharedPreferences? {
+        if (broken) return null
+        prefs?.let { return it }
+        return try {
+            create()
+        } catch (e: Exception) {
+            // One retry after wiping a possibly corrupt store file.
+            try {
+                File(appContext.applicationInfo.dataDir + "/shared_prefs/aula_voice_key.xml").delete()
+            } catch (ignored: Exception) {
+            }
+            try {
+                create()
+            } catch (e2: Exception) {
+                broken = true
+                null
+            }
+        }
+    }
+
+    private fun create(): SharedPreferences {
+        val master = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        val p = EncryptedSharedPreferences.create(
+            appContext,
+            "aula_voice_key",
+            master,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        prefs = p
+        return p
+    }
+
+    fun get(): String = try {
+        prefs()?.getString("key", "") ?: ""
+    } catch (e: Exception) {
+        ""
+    }
+
+    fun set(key: String) {
+        try {
+            prefs()?.edit()?.putString("key", key.trim())?.apply()
+        } catch (e: Exception) {
+        }
+    }
+
+    fun clear() {
+        try {
+            prefs()?.edit()?.remove("key")?.apply()
+        } catch (e: Exception) {
+        }
+    }
+
+    fun has(): Boolean = get().isNotEmpty()
+}
+
+private class HttpVoiceException(val code: Int) : Exception("HTTP " + code)
+
+/**
+ * Voice, two engines:
+ *
+ * 1. Optional AI cloud voice — Google Cloud Text-to-Speech, Chirp 3 HD
+ *    (female teacher voice), falling back to WaveNet, using the
+ *    LEARNER'S OWN API key from Ajustes: the same pattern as Brian's
+ *    other apps. The audio plays through MediaPlayer, and while it
+ *    plays a ticker reports the spoken character position to
+ *    [syncListener], so the Guide's mouth follows the REAL audio.
+ *    Any failure (no key, no network, 4-second timeout, HTTP error)
+ *    falls back to the device voice for that utterance, silently.
+ *    Fetched clips are cached on the device, so repeats are instant
+ *    and free.
+ *
+ * 2. Device voice with the Samsung fix: initialize Android
+ *    TextToSpeech with the Google engine ("com.google.android.tts")
+ *    FIRST, because the system default engine fails silently on many
+ *    Samsung Galaxy setups; fall back to the default engine.
+ */
+class TtsManager(
+    context: Context,
+    private val speedProvider: () -> Float,
+    private val keyProvider: () -> String
+) {
 
     private var tts: TextToSpeech? = null
     private var ready = false
@@ -410,9 +514,29 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
      * The Guide registers here before speaking: utterance progress
      * (start, character ranges, done) is forwarded so the teacher's
      * mouth moves WITH the voice instead of on an independent timer.
+     * Both engines feed this same listener.
      */
     @Volatile
     var syncListener: android.speech.tts.UtteranceProgressListener? = null
+
+    // ---- cloud voice state ----
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var player: MediaPlayer? = null
+    private var ticker: Runnable? = null
+    private var currentUtteranceId: String? = null
+    private var currentText: String = ""
+    private var utteranceSeq = 0
+    private val fetchExecutor = Executors.newSingleThreadExecutor()
+
+    @Volatile
+    private var cloudBlocked = false
+
+    @Volatile
+    private var chirpBlocked = false
+
+    @Volatile
+    private var netFailures = 0
+    private val cloudCacheDir = File(appContext.cacheDir, "cloudtts")
 
     init {
         create("com.google.android.tts")
@@ -478,7 +602,201 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
         }
     }
 
+    /** Saving or clearing the key re-enables the cloud voice. */
+    fun onKeyChanged() {
+        cloudBlocked = false
+        chirpBlocked = false
+        netFailures = 0
+    }
+
     fun speak(text: String, slow: Boolean = false) {
+        val key = try {
+            keyProvider().trim()
+        } catch (e: Exception) {
+            ""
+        }
+        if (key.isNotEmpty() && !cloudBlocked) {
+            speakCloud(text, slow, key)
+        } else {
+            speakDevice(text, slow)
+        }
+    }
+
+    // ---------------- cloud voice ----------------
+
+    private fun speakCloud(text: String, slow: Boolean, key: String) {
+        stopPlayer()
+        try {
+            tts?.stop()
+        } catch (e: Exception) {
+        }
+        val id = "cloud-" + (++utteranceSeq)
+        currentUtteranceId = id
+        fetchExecutor.execute {
+            try {
+                val file = fetchAudio(text, key)
+                netFailures = 0
+                mainHandler.post {
+                    if (currentUtteranceId == id) playCloudFile(file, text, slow, id)
+                }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    if (currentUtteranceId == id) speakDevice(text, slow)
+                }
+            }
+        }
+    }
+
+    private fun fetchAudio(text: String, key: String): File {
+        if (!cloudCacheDir.exists()) cloudCacheDir.mkdirs()
+        val voices = if (chirpBlocked) {
+            listOf(WAVENET_VOICE)
+        } else {
+            listOf(CHIRP_VOICE, WAVENET_VOICE)
+        }
+        var failure: Exception? = null
+        for (voice in voices) {
+            val cacheFile = File(cloudCacheDir, md5(text + "|" + voice) + ".mp3")
+            if (cacheFile.exists() && cacheFile.length() > 0) return cacheFile
+            try {
+                val bytes = synthesize(text, voice, key)
+                cacheFile.writeBytes(bytes)
+                return cacheFile
+            } catch (e: HttpVoiceException) {
+                if (voice == CHIRP_VOICE) {
+                    chirpBlocked = true
+                    failure = e
+                } else {
+                    cloudBlocked = true
+                    throw e
+                }
+            } catch (e: Exception) {
+                failure = e
+            }
+        }
+        netFailures++
+        if (netFailures >= 3) cloudBlocked = true
+        throw (failure ?: Exception("cloud voice failed"))
+    }
+
+    private fun synthesize(text: String, voice: String, key: String): ByteArray {
+        val body = JSONObject()
+        body.put("input", JSONObject().put("text", text))
+        body.put("voice", JSONObject().put("languageCode", "en-US").put("name", voice))
+        body.put("audioConfig", JSONObject().put("audioEncoding", "MP3"))
+        val conn = URL("https://texttospeech.googleapis.com/v1/text:synthesize")
+            .openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.connectTimeout = 4000
+        conn.readTimeout = 4000
+        conn.doOutput = true
+        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+        conn.setRequestProperty("X-Goog-Api-Key", key)
+        conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+        val code = conn.responseCode
+        if (code !in 200..299) throw HttpVoiceException(code)
+        val resp = conn.inputStream.bufferedReader().use { it.readText() }
+        val b64 = JSONObject(resp).optString("audioContent")
+        if (b64.isEmpty()) throw Exception("empty audioContent")
+        return Base64.decode(b64, Base64.DEFAULT)
+    }
+
+    private fun playCloudFile(file: File, text: String, slow: Boolean, id: String) {
+        stopPlayer()
+        currentText = text
+        try {
+            val mp = MediaPlayer()
+            player = mp
+            mp.setDataSource(file.absolutePath)
+            mp.setOnPreparedListener {
+                try {
+                    val spd = ((if (slow) 0.68f else 1f) * speedProvider()).coerceIn(0.5f, 1.5f)
+                    mp.playbackParams = mp.playbackParams.setSpeed(spd)
+                } catch (e: Exception) {
+                }
+                try {
+                    mp.start()
+                    syncListener?.onStart(id)
+                    startTicker(id)
+                } catch (e: Exception) {
+                    syncListener?.onError(id)
+                }
+            }
+            mp.setOnCompletionListener {
+                stopTicker()
+                syncListener?.onDone(id)
+            }
+            mp.setOnErrorListener { _, _, _ ->
+                stopTicker()
+                @Suppress("DEPRECATION")
+                syncListener?.onError(id)
+                true
+            }
+            mp.prepareAsync()
+        } catch (e: Exception) {
+            @Suppress("DEPRECATION")
+            syncListener?.onError(id)
+        }
+    }
+
+    private fun startTicker(id: String) {
+        stopTicker()
+        var lastPos = -1
+        val r = object : Runnable {
+            override fun run() {
+                val mp = player
+                if (mp != null && currentUtteranceId == id) {
+                    try {
+                        if (mp.isPlaying) {
+                            val dur = mp.duration
+                            if (dur > 0 && currentText.isNotEmpty()) {
+                                val cp = (mp.currentPosition.toDouble() / dur.toDouble() * currentText.length)
+                                    .toInt()
+                                    .coerceIn(0, currentText.length - 1)
+                                if (cp != lastPos) {
+                                    lastPos = cp
+                                    syncListener?.onRangeStart(id, cp, minOf(cp + 1, currentText.length), 0)
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                    }
+                    mainHandler.postDelayed(this, 40)
+                }
+            }
+        }
+        ticker = r
+        mainHandler.postDelayed(r, 40)
+    }
+
+    private fun stopTicker() {
+        ticker?.let { mainHandler.removeCallbacks(it) }
+        ticker = null
+    }
+
+    private fun stopPlayer() {
+        stopTicker()
+        try {
+            player?.stop()
+        } catch (e: Exception) {
+        }
+        try {
+            player?.release()
+        } catch (e: Exception) {
+        }
+        player = null
+    }
+
+    private fun md5(s: String): String {
+        val digest = MessageDigest.getInstance("MD5").digest(s.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    // ---------------- device voice ----------------
+
+    private fun speakDevice(text: String, slow: Boolean) {
+        stopPlayer()
+        currentUtteranceId = null
         if (ready) {
             speakNow(text, slow)
         } else {
@@ -498,6 +816,8 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
     }
 
     fun stop() {
+        currentUtteranceId = null
+        stopPlayer()
         try {
             tts?.stop()
         } catch (e: Exception) {
@@ -505,6 +825,11 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
     }
 
     fun shutdown() {
+        stop()
+        try {
+            fetchExecutor.shutdownNow()
+        } catch (e: Exception) {
+        }
         try {
             tts?.stop()
             tts?.shutdown()
@@ -512,5 +837,10 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
         }
         tts = null
         ready = false
+    }
+
+    companion object {
+        private const val CHIRP_VOICE = "en-US-Chirp3-HD-Aoede"
+        private const val WAVENET_VOICE = "en-US-Wavenet-F"
     }
 }
