@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Aula native scaffold: no network, no microphone. Everything is on-device. -->
+    <!-- The learning engine is fully on-device. INTERNET is used ONLY by the
+         optional cloud voice, with the learner's own Google key (Ajustes). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
