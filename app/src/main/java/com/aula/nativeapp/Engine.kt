@@ -15,6 +15,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.Executors
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -314,6 +315,13 @@ class SettingsStore(context: Context) {
             prefs.edit().putBoolean("guide", v).apply()
         }
 
+    /** Chosen Chirp voice for the cloud teacher (Ajustes). */
+    var voice: String
+        get() = prefs.getString("voice", "en-US-Chirp3-HD-Aoede") ?: "en-US-Chirp3-HD-Aoede"
+        set(v) {
+            prefs.edit().putString("voice", v).apply()
+        }
+
     fun reset() {
         prefs.edit().clear().apply()
     }
@@ -502,8 +510,15 @@ private class HttpVoiceException(val code: Int) : Exception("HTTP " + code)
 class TtsManager(
     context: Context,
     private val speedProvider: () -> Float,
-    private val keyProvider: () -> String
+    private val keyProvider: () -> String,
+    private val voiceProvider: () -> String
 ) {
+
+    /** True while either engine is actually producing sound. */
+    val speaking = MutableStateFlow(false)
+
+    /** Human-readable state of the last cloud-voice attempt (Ajustes). */
+    val cloudStatus = MutableStateFlow("Sin probar todavía: pulsa «Probar voz».")
 
     private var tts: TextToSpeech? = null
     private var ready = false
@@ -553,20 +568,24 @@ class TtsManager(
                 try {
                     tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
                         override fun onStart(id: String?) {
+                            speaking.value = true
                             syncListener?.onStart(id)
                         }
 
                         override fun onDone(id: String?) {
+                            speaking.value = false
                             syncListener?.onDone(id)
                         }
 
                         @Deprecated("Forwarded for older engines")
                         override fun onError(id: String?) {
+                            speaking.value = false
                             @Suppress("DEPRECATION")
                             syncListener?.onError(id)
                         }
 
                         override fun onError(id: String?, errorCode: Int) {
+                            speaking.value = false
                             @Suppress("DEPRECATION")
                             syncListener?.onError(id)
                         }
@@ -649,21 +668,31 @@ class TtsManager(
 
     private fun fetchAudio(text: String, key: String): File {
         if (!cloudCacheDir.exists()) cloudCacheDir.mkdirs()
+        val chirp = voiceProvider().ifBlank { CHIRP_VOICE }
         val voices = if (chirpBlocked) {
             listOf(WAVENET_VOICE)
         } else {
-            listOf(CHIRP_VOICE, WAVENET_VOICE)
+            listOf(chirp, WAVENET_VOICE)
         }
         var failure: Exception? = null
         for (voice in voices) {
             val cacheFile = File(cloudCacheDir, md5(text + "|" + voice) + ".mp3")
-            if (cacheFile.exists() && cacheFile.length() > 0) return cacheFile
+            if (cacheFile.exists() && cacheFile.length() > 0) {
+                cloudStatus.value = "Voz IA activa ✓ · $voice (desde la caché del teléfono)"
+                return cacheFile
+            }
             try {
                 val bytes = synthesize(text, voice, key)
                 cacheFile.writeBytes(bytes)
+                cloudStatus.value = "Voz IA activa ✓ · $voice"
                 return cacheFile
             } catch (e: HttpVoiceException) {
-                if (voice == CHIRP_VOICE) {
+                cloudStatus.value = when (e.code) {
+                    400 -> "Google rechazó la petición (HTTP 400): puede ser la voz elegida. Prueba otra voz o avisa a Pablo."
+                    401, 403 -> "Tu clave fue rechazada (HTTP ${e.code}): puede estar restringida a web o sin la API de voz activada. Mientras tanto suena la voz del teléfono."
+                    else -> "La voz IA falló (HTTP ${e.code}): suena la voz del teléfono."
+                }
+                if (voice == chirp) {
                     chirpBlocked = true
                     failure = e
                 } else {
@@ -674,6 +703,7 @@ class TtsManager(
                 failure = e
             }
         }
+        cloudStatus.value = "Sin conexión con la voz IA: suena la voz del teléfono. Revisa tu internet y prueba otra vez."
         netFailures++
         if (netFailures >= 3) cloudBlocked = true
         throw (failure ?: Exception("cloud voice failed"))
@@ -684,8 +714,10 @@ class TtsManager(
         body.put("input", JSONObject().put("text", text))
         body.put("voice", JSONObject().put("languageCode", "en-US").put("name", voice))
         body.put("audioConfig", JSONObject().put("audioEncoding", "MP3"))
-        val conn = URL("https://texttospeech.googleapis.com/v1/text:synthesize")
-            .openConnection() as HttpURLConnection
+        val conn = URL(
+            "https://texttospeech.googleapis.com/v1/text:synthesize?key=" +
+                java.net.URLEncoder.encode(key, "UTF-8")
+        ).openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
         conn.connectTimeout = 4000
         conn.readTimeout = 4000
@@ -716,18 +748,23 @@ class TtsManager(
                 }
                 try {
                     mp.start()
+                    speaking.value = true
                     syncListener?.onStart(id)
                     startTicker(id)
                 } catch (e: Exception) {
+                    speaking.value = false
+                    @Suppress("DEPRECATION")
                     syncListener?.onError(id)
                 }
             }
             mp.setOnCompletionListener {
                 stopTicker()
+                speaking.value = false
                 syncListener?.onDone(id)
             }
             mp.setOnErrorListener { _, _, _ ->
                 stopTicker()
+                speaking.value = false
                 @Suppress("DEPRECATION")
                 syncListener?.onError(id)
                 true
@@ -817,6 +854,7 @@ class TtsManager(
 
     fun stop() {
         currentUtteranceId = null
+        speaking.value = false
         stopPlayer()
         try {
             tts?.stop()
