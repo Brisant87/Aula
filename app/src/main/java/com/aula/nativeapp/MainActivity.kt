@@ -1,10 +1,15 @@
 package com.aula.nativeapp
 
 import android.os.Bundle
+import android.speech.tts.UtteranceProgressListener
+import java.util.concurrent.atomic.AtomicBoolean
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +55,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -316,9 +324,10 @@ fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
 }
 
 @Composable
-fun PrimaryButton(text: String, olive: Boolean = false, onClick: () -> Unit) {
+fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        modifier = modifier,
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (olive) Olive else Terracotta,
@@ -330,9 +339,10 @@ fun PrimaryButton(text: String, olive: Boolean = false, onClick: () -> Unit) {
 }
 
 @Composable
-fun GhostButton(text: String, onClick: () -> Unit) {
+fun GhostButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
+        modifier = modifier,
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, TerracottaDeep),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TerracottaDeep, containerColor = Cream)
@@ -692,6 +702,35 @@ fun MouthCanvas(shape: MouthShape, modifier: Modifier = Modifier) {
  * Ratings log pronunciation:<word> events; "Casi" logs nothing, like the web app.
  */
 @Composable
+/**
+ * The teacher's face: AI-generated 3D-style artwork, one pose per mouth
+ * shape, crossfaded so switching poses reads as movement. The "open"
+ * shape reuses the relaxed pose (its short vowel is nearly identical).
+ */
+@Composable
+fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
+    val res = when (shapeKey) {
+        "closed" -> R.drawable.mouth_closed
+        "round" -> R.drawable.mouth_round
+        "wide" -> R.drawable.mouth_wide
+        "th" -> R.drawable.mouth_th
+        "tongueup" -> R.drawable.mouth_tongueup
+        "relaxed", "open" -> R.drawable.mouth_relaxed
+        else -> R.drawable.mouth_rest
+    }
+    Crossfade(targetState = res, animationSpec = tween(160), label = "mouthFigure") { r ->
+        Image(
+            painter = painterResource(r),
+            contentDescription = "La profesora mostrando el sonido",
+            modifier = modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(16.dp)),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
 fun GuideCard(
     wordKey: String,
     context: String,
@@ -709,32 +748,65 @@ fun GuideCard(
     val scope = rememberCoroutineScope()
 
     DisposableEffect(wordKey) {
-        onDispose { playJob?.cancel() }
+        onDispose { playJob?.cancel(); tts.syncListener = null }
     }
 
     fun stopPlay() {
         playJob?.cancel()
         playJob = null
         playing = false
+        tts.syncListener = null
     }
 
     fun playWithVoice(slow: Boolean) {
         if (playing) {
             stopPlay()
+            tts.stop()
             return
         }
-        playJob = scope.launch {
-            playing = true
-            step = 0
-            tts.speak(gw.word, slow = slow)
-            val ms = if (slow) 2600L else 1500L
-            for (i in 1 until gw.steps.size) {
-                delay(ms)
-                step = i
+        step = 0
+        playing = true
+        /* La voz mueve la boca: onRangeStart dice qué letras se están
+           pronunciando y cada paso cubre sus letras (sh = 2, ee = 2...).
+           Si el motor no da rangos, un temporizador asume el relevo
+           tras 350 ms para que la boca nunca se quede quieta. */
+        val bounds = ArrayList<Int>()
+        var acc = 0
+        for (st in gw.steps) { acc += st.s.length; bounds.add(acc) }
+        val rangeSeen = AtomicBoolean(false)
+        tts.syncListener = object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                playJob = scope.launch {
+                    delay(350)
+                    if (!rangeSeen.get()) {
+                        val ms = if (slow) 2600L else 1500L
+                        for (i in 1 until gw.steps.size) {
+                            delay(ms)
+                            if (rangeSeen.get()) break
+                            step = i
+                        }
+                    }
+                }
             }
-            delay(ms)
-            playing = false
+
+            override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                rangeSeen.set(true)
+                var idx = bounds.indexOfFirst { start < it }
+                if (idx < 0) idx = gw.steps.size - 1
+                val target = idx
+                scope.launch { step = target }
+            }
+
+            override fun onDone(utteranceId: String?) {
+                scope.launch { playing = false; tts.syncListener = null }
+            }
+
+            @Deprecated("Forwarded for older engines")
+            override fun onError(utteranceId: String?) {
+                scope.launch { playing = false; tts.syncListener = null }
+            }
         }
+        tts.speak(gw.word, slow = slow)
     }
 
     fun rate(kind: String) {
@@ -770,8 +842,7 @@ fun GuideCard(
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(Modifier.height(8.dp))
-        val shape = MOUTH_SHAPES[gw.steps[step].shape] ?: MOUTH_SHAPES.getValue("rest")
-        MouthCanvas(shape)
+        MouthFigure(gw.steps[step].shape)
         Spacer(Modifier.height(6.dp))
         Text(
             "${gw.steps[step].s}  ·  ${gw.steps[step].ipa}",
@@ -801,41 +872,36 @@ fun GuideCard(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(12.dp))
+        PrimaryButton(
+            if (playing) "⏸ Pausar" else "▶ Escuchar y ver",
+            modifier = Modifier.fillMaxWidth()
+        ) { playWithVoice(false) }
+        Spacer(Modifier.height(8.dp))
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            GhostButton("← Anterior") {
+            GhostButton("← Anterior", modifier = Modifier.weight(1f)) {
                 stopPlay()
                 step = maxOf(0, step - 1)
             }
-            Spacer(Modifier.width(8.dp))
-            PrimaryButton(if (playing) "⏸ Pausar" else "▶ Escuchar y ver") { playWithVoice(false) }
-            Spacer(Modifier.width(8.dp))
-            GhostButton("Siguiente →") {
+            GhostButton("Siguiente →", modifier = Modifier.weight(1f)) {
                 stopPlay()
                 step = minOf(gw.steps.size - 1, step + 1)
             }
         }
         Spacer(Modifier.height(8.dp))
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            PrimaryButton("🐢 Lento: voz y boca", olive = true) { playWithVoice(true) }
-        }
+        PrimaryButton("🐢 Lento: voz y boca", olive = true, modifier = Modifier.fillMaxWidth()) { playWithVoice(true) }
         Spacer(Modifier.height(14.dp))
         NoteText("Copia: escucha el modelo, repite en voz alta y júzgate tú. Sin notas inventadas: tu oído manda. (La grabación de voz llega en una próxima versión nativa.)")
         Spacer(Modifier.height(10.dp))
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            PrimaryButton("Así es ✓", olive = true) { rate("good") }
-            Spacer(Modifier.width(8.dp))
-            GhostButton("Casi") { rate("mid") }
-            Spacer(Modifier.width(8.dp))
-            GhostButton("Todavía no") { rate("bad") }
+            PrimaryButton("Así es ✓", olive = true, modifier = Modifier.weight(1f)) { rate("good") }
+            GhostButton("Casi", modifier = Modifier.weight(1f)) { rate("mid") }
+            GhostButton("Todavía no", modifier = Modifier.weight(1f)) { rate("bad") }
         }
         ratedNote?.let {
             Spacer(Modifier.height(10.dp))
