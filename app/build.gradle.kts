@@ -11,8 +11,8 @@ android {
     applicationId = "com.aula.nativeapp"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "0.2"
+    versionCode = 3
+    versionName = "0.3"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -62,6 +62,7 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.kotlinx.coroutines.android)
+  implementation(libs.androidx.security.crypto)
   implementation(libs.kotlinx.coroutines.core)
   debugImplementation(libs.androidx.compose.ui.tooling)
 }
