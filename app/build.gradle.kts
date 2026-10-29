@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-  namespace = "com.aula.native"
+  namespace = "com.aula.nativeapp"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aula.native"
+    applicationId = "com.aula.nativeapp"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
