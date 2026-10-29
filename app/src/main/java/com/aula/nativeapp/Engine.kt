@@ -406,6 +406,14 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
     private val pending = mutableListOf<Pair<String, Boolean>>()
     private val appContext: Context = context.applicationContext
 
+    /**
+     * The Guide registers here before speaking: utterance progress
+     * (start, character ranges, done) is forwarded so the teacher's
+     * mouth moves WITH the voice instead of on an independent timer.
+     */
+    @Volatile
+    var syncListener: android.speech.tts.UtteranceProgressListener? = null
+
     init {
         create("com.google.android.tts")
     }
@@ -417,6 +425,35 @@ class TtsManager(context: Context, private val speedProvider: () -> Float) {
                     tts?.language = Locale.US
                 } catch (e: Exception) {
                     // Language data missing: speech may stay silent, UI still works.
+                }
+                try {
+                    tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                        override fun onStart(id: String?) {
+                            syncListener?.onStart(id)
+                        }
+
+                        override fun onDone(id: String?) {
+                            syncListener?.onDone(id)
+                        }
+
+                        @Deprecated("Forwarded for older engines")
+                        override fun onError(id: String?) {
+                            @Suppress("DEPRECATION")
+                            syncListener?.onError(id)
+                        }
+
+                        override fun onError(id: String?, errorCode: Int) {
+                            @Suppress("DEPRECATION")
+                            syncListener?.onError(id)
+                        }
+
+                        override fun onRangeStart(id: String?, start: Int, end: Int, frame: Int) {
+                            syncListener?.onRangeStart(id, start, end, frame)
+                        }
+                    })
+                } catch (e: Exception) {
+                    // No progress callbacks on this engine: the Guide's
+                    // fallback timer keeps the mouth moving.
                 }
                 ready = true
                 val copy = pending.toList()
