@@ -7,7 +7,7 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 kotlinxCoroutinesAndroid = "1.10.2"
 kotlinxCoroutinesCore = "1.10.2"
-securityCrypto = "1.0.0"
+securityCrypto = "1.1.0-alpha06"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
