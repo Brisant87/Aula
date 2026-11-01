@@ -1733,11 +1733,26 @@ fun ConversacionesScreen(
     bump: () -> Unit
 ) {
     var convId by remember { mutableStateOf<String?>(null) }
+    var liveConvId by remember { mutableStateOf<String?>(null) }
     var turnIdx by remember { mutableStateOf(0) }
     var picked by remember { mutableStateOf<Int?>(null) }
     var doneTurns by remember { mutableStateOf<List<ConvTurn>>(emptyList()) }
     var listenIdx by remember { mutableStateOf(0) }
     val practiceItems = remember { LISTENING.filter { !it.transfer } }
+
+    // Conversación en vivo takes over the whole tab while it runs: a
+    // real back-and-forth by voice over the same scene, with per-word
+    // feedback. Leaving it returns here; its per-turn Mirror events
+    // were already logged as they happened (see LiveConversationScreen).
+    val liveId = liveConvId
+    if (liveId != null) {
+        val liveConv = CONVERSATIONS.firstOrNull { it.id == liveId }
+        if (liveConv != null) {
+            LiveConversationScreen(liveConv, store, tts, bump) { liveConvId = null }
+            return
+        }
+        liveConvId = null
+    }
 
     Column(
         Modifier
@@ -1888,6 +1903,13 @@ fun ConversacionesScreen(
                     turnIdx = 0
                     picked = null
                     doneTurns = emptyList()
+                }
+                if (LiveConversationBanks.bankFor(c.id) != null) {
+                    Spacer(Modifier.height(8.dp))
+                    GhostButton("🎙 Conversación en vivo", modifier = Modifier.fillMaxWidth()) {
+                        liveConvId = c.id
+                    }
+                    NoteText("La misma escena, pero hablando de verdad: la conversación sigue lo que digas y la profesora te marca las palabras que fallan.")
                 }
             }
             Spacer(Modifier.height(14.dp))
