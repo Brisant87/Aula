@@ -12,14 +12,15 @@ import org.junit.Test
  * lives in the Compose screen; what is pure — and therefore testable
  * — is [LiveGrader] (the exact function the screen calls),
  * [LiveGrader.isSilenceMarker] (the screen's ungraded-close guard),
- * the Mirror event SHAPES the screen writes per graded turn (asserted
- * here as data: one conversation_turn + one pronunciation:<word> per
- * suspect), and [LiveSessionState]'s recap math. The composable glue
- * itself (mic funnel arming) is not unit-testable without
- * instrumentation and is flagged as such in the delivery report.
+ * the per-turn suspect selection the screen's Mirror events are
+ * built from (the event shapes themselves are pinned in
+ * LiveMirrorWiringTest), and [LiveSessionState]'s recap math. The
+ * composable glue itself (mic funnel arming) is not unit-testable
+ * without instrumentation and is flagged as such in the delivery
+ * report.
  *
- * Harness gap: see LiveConversationEngineTest's header — these suites
- * are dormant until a junit dependency + CI test step are added.
+ * Harness: see LiveConversationEngineTest's header — the CI gate
+ * runs these suites (run #33: 29/29 across the live suites).
  */
 class LiveConversationSessionTest {
 
@@ -65,7 +66,7 @@ class LiveConversationSessionTest {
     }
 
     @Test
-    fun `trap evidence yields exactly the per-word Mirror event shapes the screen writes`() {
+    fun `an unspoken word is never a suspect - alternatives only incriminate produced words`() {
         val (_, feedback) = LiveGrader.grade(
             spokenText = "I would like a coffee, please",
             hypotheses = listOf(
@@ -74,8 +75,9 @@ class LiveConversationSessionTest {
             ),
             prompt = LiveConversationBanks.bankFor("cafe")!!.branches.first { it.prompt.id == "b_food" }.prompt
         )
-        // The screen writes one pronunciation:<word> FALSE event per
-        // suspect word, context "conversaciones" — this is the list.
+        // The screen writes one phantom-E family Mirror event per
+        // suspect word (see LiveMirrorWiringTest) — this is the list
+        // it is built from.
         val suspects = feedback.words.filter { it.status == LiveWordStatus.PRONUNCIATION_SUSPECT }
         // "sandwich" was never spoken in the top hypothesis, so it is
         // wrong-or-missing, NOT a suspect: alternatives only incriminate
@@ -84,7 +86,7 @@ class LiveConversationSessionTest {
     }
 
     @Test
-    fun `a produced word betrayed by its alternative yields one suspect event shape`() {
+    fun `a produced word betrayed by its alternative yields exactly one suspect`() {
         val (_, feedback) = LiveGrader.grade(
             spokenText = "I would like a sandwich, please",
             hypotheses = listOf(
@@ -101,8 +103,39 @@ class LiveConversationSessionTest {
     fun `silence and blank input are recognition failures, not replies`() {
         assertTrue(LiveGrader.isSilenceMarker(""))
         assertTrue(LiveGrader.isSilenceMarker("   "))
-        assertTrue(LiveGrader.isSilenceMarker("(Sin audio detectado)"))
+        // "(Sin audio detectado)" is NOT a live marker (Mi2): the
+        // probe never emits it, so isSilenceMarker no longer treats
+        // it as one. As plain text it would reach ConversationScorer,
+        // whose own silence branch still handles it as defense.
+        assertFalse(LiveGrader.isSilenceMarker("(Sin audio detectado)"))
         assertFalse(LiveGrader.isSilenceMarker("I would like a coffee, please"))
+    }
+
+    @Test
+    fun `the scorer detects the true phantom-E form - e plus keyword`() {
+        // The audit's hand-derived case (Mi1): the trap form learners
+        // actually produce is "e" + keyword ("esister"), not
+        // "es" + keyword. Against ayer/b_family's first model reply,
+        // the scorer's trap note and its -12 must fire.
+        val prompt = LiveConversationBanks.bankFor("ayer")!!
+            .branches.first { it.prompt.id == "b_family" }.prompt
+        val (trapped, feedback) = LiveGrader.grade(
+            spokenText = "I watched a movie with my esister",
+            hypotheses = listOf("I watched a movie with my esister"),
+            prompt = prompt
+        )
+        assertTrue(trapped.detectedTraps.any { it.contains("sister") })
+        assertEquals(
+            LiveWordStatus.PRONUNCIATION_SUSPECT,
+            feedback.words.first { it.word == "sister" }.status
+        )
+        // And the trap costs points versus the same reply said clean.
+        val (clean, _) = LiveGrader.grade(
+            spokenText = "I watched a movie with my sister",
+            hypotheses = listOf("I watched a movie with my sister"),
+            prompt = prompt
+        )
+        assertTrue(trapped.accuracyScore < clean.accuracyScore)
     }
 
     @Test

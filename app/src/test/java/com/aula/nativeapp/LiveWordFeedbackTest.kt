@@ -14,8 +14,8 @@ import org.junit.Test
  * evidence — never from the transcript alone, never from trap-list
  * membership.
  *
- * Harness gap: see LiveConversationEngineTest's header — these suites
- * are dormant until a junit dependency + CI test step are added.
+ * Harness: see LiveConversationEngineTest's header — the CI gate
+ * runs these suites (run #33: 29/29 across the live suites).
  */
 class LiveWordFeedbackTest {
 

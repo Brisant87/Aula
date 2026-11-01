@@ -1,5 +1,6 @@
 package com.aula.nativeapp
 
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -11,13 +12,11 @@ import org.junit.Test
  * Cognata's LiveConversationEngineTest coverage, over Aula's own
  * three conversation banks (cafe / ayer / hotel).
  *
- * NOTE (harness gap, flagged in the delivery report): Aula native has
- * no test source set wiring yet — app/build.gradle.kts declares no
- * testImplementation and CI runs only assembleDebug. These suites are
- * written against JUnit 4 exactly like Cognata's and sit in the
- * standard source-set location, but they will not compile or run
- * until a junit dependency and a testDebugUnitTest CI step are added
- * (a gradle/workflow change, deliberately NOT made by this port).
+ * Harness: app/build.gradle.kts declares testImplementation
+ * junit 4.13.2 and CI (.github/workflows/android.yml) runs
+ * testDebugUnitTest as a gate BEFORE assembleDebug — a red battery
+ * fails the build. These suites are live: run #33 passed 29/29
+ * across the three original live suites.
  */
 class LiveConversationEngineTest {
 
@@ -159,5 +158,31 @@ class LiveConversationEngineTest {
     @Test
     fun `an unknown conversation has no bank`() {
         assertNull(LiveConversationBanks.bankFor("no-existe"))
+    }
+
+    @Test
+    fun `every target keyword is matchable against its own prompt model replies`() {
+        // Bank invariant (Mi5): a keyword the scorer counts must be a
+        // word the learner can actually produce by following the
+        // prompt's own model replies — matched with the scorer's own
+        // stem semantics, against the replies collectively.
+        for (conv in CONVERSATIONS) {
+            val bank = LiveConversationBanks.bankFor(conv.id)!!
+            val prompts = listOf(bank.opening) + bank.branches.map { it.prompt } + bank.generics
+            for (prompt in prompts) {
+                for (keyword in prompt.targetKeywords) {
+                    val k = keyword.lowercase(Locale.US)
+                    val hit = prompt.modelReplies.any { reply ->
+                        val clean = reply.lowercase(Locale.US)
+                        val tokens = clean.split(Regex("[^a-zA-Záéíóúñ]+")).filter { it.isNotEmpty() }
+                        ConversationScorer.keywordMatched(k, clean, tokens)
+                    }
+                    assertTrue(
+                        "${conv.id}/${prompt.id}: keyword '$keyword' matches none of its model replies",
+                        hit
+                    )
+                }
+            }
+        }
     }
 }
