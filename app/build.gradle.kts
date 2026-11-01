@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -65,4 +67,18 @@ dependencies {
   implementation(libs.androidx.security.crypto)
   implementation(libs.kotlinx.coroutines.core)
   debugImplementation(libs.androidx.compose.ui.tooling)
+  testImplementation("junit:junit:4.13.2")
+}
+
+// Unit-test gate discipline (mirrors the Cognata donor): the CI workflow runs
+// testDebugUnitTest BEFORE assembleDebug, so a red battery fails the build.
+// This block only configures reporting — it changes no app behavior.
+tasks.withType<Test> {
+  failFast = false
+  timeout.set(Duration.ofMinutes(2))
+  testLogging {
+    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    showStandardStreams = true
+    events("passed", "failed", "skipped", "standard_out", "standard_error")
+  }
 }
