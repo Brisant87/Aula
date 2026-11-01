@@ -37,6 +37,20 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
+      - name: Run unit tests (live conversation gate)
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 9.3.1
+          arguments: testDebugUnitTest --stacktrace
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: app/build/test-results/testDebugUnitTest
+          if-no-files-found: ignore
+
       - name: Build the debug APK
         uses: gradle/gradle-build-action@v3
         with:
