@@ -595,17 +595,6 @@ class LiveSpeechProbe(context: Context) {
 
     private var recognizer: SpeechRecognizer? = null
 
-    init {
-        try {
-            if (SpeechRecognizer.isRecognitionAvailable(appContext)) {
-                recognizer = SpeechRecognizer.createSpeechRecognizer(appContext)
-                recognizer?.setRecognitionListener(listener)
-            }
-        } catch (e: Exception) {
-            recognizer = null
-        }
-    }
-
     private val listener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {}
         override fun onBeginningOfSpeech() {}
@@ -663,6 +652,21 @@ class LiveSpeechProbe(context: Context) {
 
         override fun onPartialResults(partialResults: Bundle?) {}
         override fun onEvent(eventType: Int, params: Bundle?) {}
+    }
+
+    // Declared AFTER `listener`: Kotlin initializes properties in
+    // declaration order, and this block hands `listener` to the
+    // recognizer — referencing it earlier fails compilation with
+    // "Variable 'listener' must be initialized" (CI run #32).
+    init {
+        try {
+            if (SpeechRecognizer.isRecognitionAvailable(appContext)) {
+                recognizer = SpeechRecognizer.createSpeechRecognizer(appContext)
+                recognizer?.setRecognitionListener(listener)
+            }
+        } catch (e: Exception) {
+            recognizer = null
+        }
     }
 
     /**
