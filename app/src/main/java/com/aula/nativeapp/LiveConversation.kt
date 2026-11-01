@@ -208,6 +208,15 @@ data class LiveSessionState(
     /** Word currently expanded in the inline word-practice card, if any. */
     val practiceWord: String? = null,
     /**
+     * The exchange whose chip opened the practice card, and that
+     * exchange's own feedback for the word. The card must speak for
+     * ITS turn — the same word can be weak in several turns with
+     * different evidence, so the reason/score are carried from the
+     * tapped chip, never re-derived from the first matching exchange.
+     */
+    val practiceExchangeIndex: Int? = null,
+    val practiceFeedback: LiveWordFeedback? = null,
+    /**
      * Latest single-word retry score for [practiceWord], produced by
      * the word-practice path (PronunciationBoundary + word accuracy).
      * Display-only: it belongs to the turn that surfaced the word and
@@ -240,6 +249,38 @@ data class LiveSessionState(
             }
             return out
         }
+}
+
+/**
+ * The Mirror events ONE graded live turn writes, as data — the exact
+ * shapes LiveConversationScreen logs, in order, so the wiring itself
+ * is unit-testable:
+ *
+ *  - one "conversation_turn" event in the "conversaciones" context
+ *    (correct = the scorer's GREEN band) — the same shape the guided
+ *    scenes write for a turn;
+ *  - one [PHANTOM_E_PATTERN_KEY] event (correct = false) per
+ *    PRONUNCIATION_SUSPECT word. Suspects are phantom-E evidence by
+ *    construction, and the family is ONE Mirror pattern: a per-word
+ *    key per suspect could never satisfy Mirror's naming rule
+ *    (>= 3 errors across >= 2 contexts — the Guide, the only other
+ *    pronunciation logger, teaches unrelated words, and no transfer
+ *    items exist for stray words). The family's second context is
+ *    the Guide itself: GuideCard ratings on an s-trap guide word
+ *    ("sister") log the same key in the Guide's contexts.
+ */
+fun liveMirrorEvents(result: LiveTurnScore, feedback: LiveTurnFeedback): List<Triple<String, String, Boolean>> {
+    val events = mutableListOf<Triple<String, String, Boolean>>()
+    events.add(
+        Triple(
+            "conversation_turn", "conversaciones",
+            result.scoreCategory == LiveScoreCategory.GREEN
+        )
+    )
+    feedback.words
+        .filter { it.status == LiveWordStatus.PRONUNCIATION_SUSPECT }
+        .forEach { events.add(Triple(PHANTOM_E_PATTERN_KEY, "conversaciones", false)) }
+    return events
 }
 
 // ------------------------------------------------------------------ the scorer
@@ -280,20 +321,29 @@ object ConversationScorer {
             )
         }
 
+        val spokenTokens = cleanSpoken.split(Regex("[^a-zA-Záéíóúñ]+")).filter { it.isNotEmpty() }
+
         val traps = mutableListOf<String>()
 
         // 1. Check for 'E' fantasma (Spanish speaker initial vowel insertion)
         val phantomWords = listOf("es-", "is-", "especial", "estress", "eschedule", "esperience", "espicy", "esmart", "eschool")
-        for (token in cleanSpoken.split(Regex("[^a-zA-Záéíóúñ]+"))) {
+        for (token in spokenTokens) {
             if (phantomWords.any { token.startsWith(it) }) {
                 traps.add("Trampa de la 'E' fantasma detectada en '$token': arranca con silbido 'sss' directo.")
             }
         }
-        // Also check if any target keyword starts with s+consonant but spoken has e+s+consonant
+        // Also check the target keywords against the trap forms a
+        // learner actually produces: the phantom-E is ONE prepended
+        // vowel — "e" + keyword ("esister") or "i" + keyword — the
+        // exact forms PronunciationBoundary polices, under the same
+        // s-not-sh gate. Matched as whole tokens, so a word that
+        // merely CONTAINS the form ("restore" contains "estore")
+        // never fires it.
         target.targetKeywords.forEach { kw ->
             val k = kw.lowercase(Locale.US)
             if (k.startsWith("s") && !k.startsWith("sh")) {
-                if (cleanSpoken.contains("es$k") || cleanSpoken.contains("es $k") || cleanSpoken.contains("es-$k")) {
+                val trapFormSpoken = spokenTokens.any { it == "e$k" || it == "i$k" }
+                if (trapFormSpoken || cleanSpoken.contains("es$k") || cleanSpoken.contains("es $k") || cleanSpoken.contains("es-$k")) {
                     traps.add("Vocalización española involuntaria antes de '$k'.")
                 }
             }
@@ -326,7 +376,6 @@ object ConversationScorer {
         // means the answer is Spanish, whatever cognates it contains.
         // The trap also feeds the standard penalty below, and the final
         // score is capped in the RED band.
-        val spokenTokens = cleanSpoken.split(Regex("[^a-zA-Záéíóúñ]+")).filter { it.isNotEmpty() }
         val spanishAnswer = spanishSignalCount(spokenTokens) >= 3
         if (spanishAnswer) {
             traps.add("Respuesta en español detectada: esta práctica debe ser en inglés.")
@@ -688,7 +737,7 @@ object LiveConversationBanks {
             LiveBranch(
                 prompt = LivePrompt(
                     id = "b_table",
-                    partnerLine = "Of course. Would you like a table by the window?",
+                    partnerLine = "We have a table by the window free. Would you like it?",
                     objectiveEs = "Acepta la mesa junto a la ventana, o pide sentarte ahí.",
                     modelReplies = listOf(
                         "Yes, please. Can I sit by the window?",
@@ -964,7 +1013,7 @@ object LiveConversationBanks {
                         "Yes, breakfast at eight, please.",
                         "No, thank you. Just the room."
                     ),
-                    targetKeywords = listOf("breakfast", "eight", "seven", "please"),
+                    targetKeywords = listOf("breakfast", "eight", "please"),
                     clarityTipEs = "Las horas se dicen cortas y claras: «at eight»."
                 ),
                 triggerKeywords = listOf("breakfast", "eat", "morning", "food")
@@ -1003,13 +1052,13 @@ object LiveConversationBanks {
                 prompt = LivePrompt(
                     id = "b_wifi",
                     partnerLine = "The wifi password is on your key card. Do you need anything else?",
-                    objectiveEs = "Pregunta por la contraseña del wifi o pide algo más.",
+                    objectiveEs = "Escucha dónde está la contraseña, da las gracias y cierra — o pide una cosa más.",
                     modelReplies = listOf(
-                        "What is the wifi password, please?",
-                        "No, that is all. Thank you very much."
+                        "Thank you very much. That is all.",
+                        "Yes, please. One more pillow."
                     ),
-                    targetKeywords = listOf("wifi", "password", "please", "thank"),
-                    clarityTipEs = "«What is…?» abre la pregunta: palabra Wh + verbo + tema."
+                    targetKeywords = listOf("thank", "all", "please", "pillow"),
+                    clarityTipEs = "«That is all» = eso es todo: la fórmula cortés para cerrar la conversación."
                 ),
                 triggerKeywords = listOf("wifi", "internet", "password")
             )

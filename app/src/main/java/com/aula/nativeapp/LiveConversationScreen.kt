@@ -1,9 +1,17 @@
 package com.aula.nativeapp
 
 import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -60,14 +70,20 @@ import androidx.core.content.ContextCompat
  * Good/Bad washes #E7EDD8 / #F7E3D5. The shared composables
  * (JournalCard, Stamp, PrimaryButton…) come from MainActivity.kt.
  *
- * Mirror wiring follows Conversaciones' own semantics exactly —
- * per-turn events in the "conversaciones" context, nothing else:
+ * Mirror wiring follows Conversaciones' own semantics — per-turn
+ * events in the "conversaciones" context (the exact shapes are
+ * [liveMirrorEvents], unit-tested as data):
  *  - one "conversation_turn" event per graded reply (correct = the
  *    scorer's GREEN band), the same pattern the guided scenes log;
- *  - one "pronunciation:<word>" event (correct = false) per
- *    evidence-backed PRONUNCIATION_SUSPECT word — the live mode's
- *    marked words are exactly the words the Mirror would otherwise
- *    never see inside a conversation.
+ *  - one event for the phantom-E FAMILY pattern
+ *    ([PHANTOM_E_PATTERN_KEY], correct = false) per evidence-backed
+ *    PRONUNCIATION_SUSPECT word. The family is a single pattern, not
+ *    one key per word: a per-word key could never be named (Mirror
+ *    needs >= 3 errors across >= 2 contexts, and no other surface
+ *    logs stray words). The family's second context is the Guide —
+ *    GuideCard ratings on the s-trap guide word "sister" log the
+ *    same key in the Guide's contexts — and its transfer items
+ *    (Data.kt pe1–pe4) give the Espejo a working transfer check.
  * Recognizer errors log NOTHING: they only close the attempt and show
  * the probe's error line. Blank/silence results close the attempt
  * ungraded. The word retry is display-only (see LiveSessionState).
@@ -75,6 +91,15 @@ import androidx.core.content.ContextCompat
  * have none either — so wrap-up writes nothing extra, and leaving
  * mid-session writes nothing: per-turn events already logged stay,
  * exactly as guided picks do.
+ *
+ * The two mic funnels (reply / word retry) share ONE recognizer:
+ * a single ownership state ([activeListen]) means starting one
+ * funnel supersedes the other — the superseded attempt closes
+ * ungraded and error-free, and each funnel's button is disabled
+ * while the other owns the mic. A permission denial is never
+ * silent either: the funnel that asked shows why and how to
+ * recover (re-ask, or the app's page in system Settings when the
+ * system will not ask again).
  *
  * The suggestion gate (Cognata's rule, carried over): the current
  * prompt's model replies stay hidden until the learner's first real
@@ -123,6 +148,15 @@ fun LiveConversationScreen(
         onDispose { probe.destroy() }
     }
 
+    // System back leaves the live conversation, not the app (Mi3) —
+    // the same exit as the on-screen button: voice and recognizer
+    // stop, and the per-turn events already logged stay in the diary.
+    BackHandler {
+        tts.stop()
+        probe.stopListening()
+        onExit()
+    }
+
     if (bank == null) {
         Column(
             Modifier
@@ -142,6 +176,21 @@ fun LiveConversationScreen(
     var replyArmed by remember { mutableStateOf(false) }
     var retryArmed by remember { mutableStateOf(false) }
     var suggestionRevealed by remember { mutableStateOf(false) }
+
+    // Mic ownership (Mo1): exactly one funnel owns the recognizer at
+    // a time — "reply", "retry", or none. Starting one supersedes
+    // the other; a superseded attempt's late error is swallowed, not
+    // shown (being replaced was not a recognition failure).
+    var activeListen by remember { mutableStateOf<String?>(null) }
+    var swallowNextError by remember { mutableStateOf(false) }
+
+    // Permission flow (M2): which funnel is waiting on the system
+    // prompt, and which funnel was denied (with whether the denial
+    // is permanent — the system will not ask again). A denial always
+    // surfaces a note + a recovery path in the funnel that asked.
+    var pendingPermission by remember { mutableStateOf<String?>(null) }
+    var denialFunnel by remember { mutableStateOf<String?>(null) }
+    var denialPermanent by remember { mutableStateOf(false) }
 
     val rawRecognition by probe.lastRecognition.collectAsState()
     val micError by probe.micError.collectAsState()
@@ -198,19 +247,16 @@ fun LiveConversationScreen(
             entries = state.entries + learnerEntry,
             awaitingReply = false,
             practiceWord = null,
+            practiceExchangeIndex = null,
+            practiceFeedback = null,
             practiceScore = null
         )
 
-        // Mirror: Conversaciones' own per-turn semantics (see header).
-        store.logEvent(
-            "conversation_turn", "conversaciones",
-            result.scoreCategory == LiveScoreCategory.GREEN
-        )
-        feedback.words
-            .filter { it.status == LiveWordStatus.PRONUNCIATION_SUSPECT }
-            .forEach { wordFeedback ->
-                store.logEvent("pronunciation:" + wordFeedback.word, "conversaciones", false)
-            }
+        // Mirror: the turn's events, exactly the shapes
+        // liveMirrorEvents defines (see the header comment).
+        for ((pattern, eventContext, ok) in liveMirrorEvents(result, feedback)) {
+            store.logEvent(pattern, eventContext, ok)
+        }
         bump()
 
         // Flow: the engine picks the next prompt from THIS transcript.
@@ -264,9 +310,13 @@ fun LiveConversationScreen(
     // recognition value can never be recorded twice.
     LaunchedEffect(rawRecognition) {
         val spoken = rawRecognition ?: return@LaunchedEffect
+        // A result settles whichever attempt produced it: any pending
+        // error-swallow belongs to a replaced attempt and dies here.
+        swallowNextError = false
         val state = session ?: return@LaunchedEffect
         if (retryArmed) {
             retryArmed = false
+            activeListen = null
             val word = state.practiceWord ?: return@LaunchedEffect
             val evidence = probe.lastEvidence.value
             val score = PronunciationBoundary.scoreSingleWord(
@@ -280,67 +330,165 @@ fun LiveConversationScreen(
         }
         if (replyArmed && state.awaitingReply) {
             replyArmed = false
+            activeListen = null
             recordReply(spoken, probe.lastEvidence.value)
         }
     }
 
     // A recognizer error closes the armed attempt ungraded — the
-    // error line below is its only trace.
+    // error line below is its only trace. An error from a SUPERSEDED
+    // attempt is not an error at all: it is swallowed silently.
     LaunchedEffect(micError) {
         if (micError == null) return@LaunchedEffect
+        if (swallowNextError) {
+            swallowNextError = false
+            probe.clearMicError()
+            return@LaunchedEffect
+        }
         if (retryArmed) retryArmed = false
         if (replyArmed) {
             replyArmed = false
             session = session?.copy(awaitingReply = false)
+        }
+        activeListen = null
+    }
+
+    // -- Mic ownership + permission helpers (Mo1 / M2) ---------------
+
+    fun disarmAll() {
+        replyArmed = false
+        retryArmed = false
+        activeListen = null
+    }
+
+    /**
+     * The other funnel is taking the recognizer: the armed attempt
+     * closes WITHOUT a verdict and WITHOUT an error line — being
+     * replaced is not a recognition failure. Its late error, if the
+     * service sends one, is swallowed by the error effect above.
+     */
+    fun supersedeActiveListen() {
+        if (activeListen == null) return
+        val wasReply = replyArmed
+        disarmAll()
+        swallowNextError = true
+        probe.stopListening()
+        if (wasReply) {
+            session = session?.copy(awaitingReply = false)
+        }
+    }
+
+    fun startReplyListen() {
+        val state = session ?: return
+        val prompt = state.currentPrompt ?: return
+        if (state.isFinished) return
+        replyArmed = true
+        activeListen = "reply"
+        denialFunnel = null
+        session = state.copy(awaitingReply = true)
+        probe.startListening(prompt.objectiveEs)
+    }
+
+    fun startRetryListen() {
+        val state = session ?: return
+        val word = state.practiceWord ?: return
+        retryArmed = true
+        activeListen = "retry"
+        denialFunnel = null
+        probe.startListening(word)
+    }
+
+    fun hasMicPermission(): Boolean = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.RECORD_AUDIO
+    ) == PackageManager.PERMISSION_GRANTED
+
+    fun openAppSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            // No settings page reachable: the denial note already
+            // spells out the manual path.
         }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        val state = session
-        if (granted && state != null && !state.isFinished && state.currentPrompt != null) {
-            replyArmed = true
-            session = state.copy(awaitingReply = true)
-            probe.startListening(state.currentPrompt.objectiveEs)
+        val funnel = pendingPermission
+        pendingPermission = null
+        if (granted) {
+            denialFunnel = null
+            denialPermanent = false
+            when (funnel) {
+                "retry" -> startRetryListen()
+                "reply" -> startReplyListen()
+            }
+        } else {
+            // A denial is never silent (M2): the funnel that asked
+            // shows why nothing happened and how to recover. Tapping
+            // its mic again re-asks while the system allows; when no
+            // rationale remains after a denial, the system will not
+            // ask again and the note points to the app's Settings
+            // page instead.
+            denialFunnel = funnel ?: "reply"
+            val activity = context.findActivity()
+            denialPermanent = activity != null &&
+                !ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity, Manifest.permission.RECORD_AUDIO
+                )
         }
     }
 
     fun armReplyMic() {
         val state = session ?: return
         if (state.isFinished || state.currentPrompt == null) return
+        if (activeListen == "reply") return
         tts.stop()
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            replyArmed = true
-            session = state.copy(awaitingReply = true)
-            probe.startListening(state.currentPrompt.objectiveEs)
+        if (activeListen == "retry") supersedeActiveListen()
+        if (hasMicPermission()) {
+            startReplyListen()
         } else {
+            pendingPermission = "reply"
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
     fun armRetryMic() {
         val state = session ?: return
-        val word = state.practiceWord ?: return
+        if (state.practiceWord == null) return
+        if (activeListen == "retry") return
         tts.stop()
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            retryArmed = true
-            probe.startListening(word)
+        if (activeListen == "reply") supersedeActiveListen()
+        if (hasMicPermission()) {
+            startRetryListen()
+        } else {
+            // The retry funnel asks through the same prompt and shows
+            // its own denial note — no silent dead button.
+            pendingPermission = "retry"
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
-        // Without permission the button simply does nothing visible;
-        // the reply mic's launcher is the one permission prompt path.
     }
 
     val state = session
     val scrollState = rememberScrollState()
     LaunchedEffect(state?.entries?.size, state?.isFinished) {
         scrollState.animateScrollTo(scrollState.maxValue)
+    }
+    // Opening the word-practice card scrolls it into view (Mo2): the
+    // card renders below the whole transcript, so without this the
+    // chip tap appears to do nothing. The card reports its own top
+    // position in the page; when it changes while a word is open,
+    // scroll to it (with a small margin above).
+    var practiceCardTop by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(state?.practiceWord, practiceCardTop) {
+        val top = practiceCardTop
+        if (state?.practiceWord != null && top != null) {
+            scrollState.animateScrollTo(maxOf(0, top - 24))
+        }
     }
 
     Column(
@@ -413,12 +561,27 @@ fun LiveConversationScreen(
                 if (exchange != null) {
                     LearnerExchangeBlock(
                         exchange = exchange,
+                        exchangeIndex = entry.exchangeIndex,
                         practiceWord = state.practiceWord,
-                        onPracticeWord = { word ->
-                            session = state.copy(
-                                practiceWord = if (state.practiceWord == word) null else word,
-                                practiceScore = null
-                            )
+                        practiceExchangeIndex = state.practiceExchangeIndex,
+                        onPracticeWord = { feedback, index ->
+                            session = if (state.practiceWord == feedback.word &&
+                                state.practiceExchangeIndex == index
+                            ) {
+                                state.copy(
+                                    practiceWord = null,
+                                    practiceExchangeIndex = null,
+                                    practiceFeedback = null,
+                                    practiceScore = null
+                                )
+                            } else {
+                                state.copy(
+                                    practiceWord = feedback.word,
+                                    practiceExchangeIndex = index,
+                                    practiceFeedback = feedback,
+                                    practiceScore = null
+                                )
+                            }
                         }
                     )
                 }
@@ -426,23 +589,39 @@ fun LiveConversationScreen(
             Spacer(Modifier.height(12.dp))
         }
 
-        // Inline word practice (La Profesora's card).
+        // Inline word practice (La Profesora's card). The reason it
+        // shows is the tapped chip's OWN turn feedback (Mi4), carried
+        // in the session state — never another turn's verdict on the
+        // same word.
         val practice = state.practiceWord
         if (practice != null) {
-            val weakest = state.exchanges
-                .flatMap { it.feedback.words }
-                .firstOrNull { it.word == practice }
-            LiveWordPracticeCard(
-                word = practice,
-                reasonEs = weakest?.reasonEs,
-                retryScore = state.practiceScore,
-                isListening = isListening && retryArmed,
-                tts = tts,
-                onHear = { tts.speak(practice, slow = false) },
-                onHearSlow = { tts.speak(practice, slow = true) },
-                onRetry = { armRetryMic() },
-                onClose = { session = state.copy(practiceWord = null, practiceScore = null) }
-            )
+            Box(
+                Modifier.onGloballyPositioned {
+                    practiceCardTop = it.positionInParent().y.toInt()
+                }
+            ) {
+                LiveWordPracticeCard(
+                    word = practice,
+                    reasonEs = state.practiceFeedback?.reasonEs,
+                    retryScore = state.practiceScore,
+                    isListening = isListening && retryArmed,
+                    retryEnabled = activeListen != "reply",
+                    denialPermanent = if (denialFunnel == "retry") denialPermanent else null,
+                    onOpenSettings = { openAppSettings() },
+                    tts = tts,
+                    onHear = { tts.speak(practice, slow = false) },
+                    onHearSlow = { tts.speak(practice, slow = true) },
+                    onRetry = { armRetryMic() },
+                    onClose = {
+                        session = state.copy(
+                            practiceWord = null,
+                            practiceExchangeIndex = null,
+                            practiceFeedback = null,
+                            practiceScore = null
+                        )
+                    }
+                )
+            }
             Spacer(Modifier.height(12.dp))
         }
 
@@ -508,17 +687,26 @@ fun LiveConversationScreen(
                 Spacer(Modifier.height(12.dp))
                 PrimaryButton(
                     when {
+                        activeListen == "retry" -> "🎙 Tu práctica tiene el micrófono…"
                         isListening -> "🎙 Escuchando… toca para terminar"
                         state.awaitingReply -> "🎙 Escuchando…"
                         else -> "🎙 Hablar"
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = activeListen != "retry"
                 ) {
                     if (isListening) probe.stopListening() else armReplyMic()
                 }
                 if (micError != null) {
                     Spacer(Modifier.height(8.dp))
                     FeedbackBox(micError!!, good = false)
+                }
+                if (denialFunnel == "reply") {
+                    Spacer(Modifier.height(8.dp))
+                    MicDenialNote(
+                        permanent = denialPermanent,
+                        onOpenSettings = { openAppSettings() }
+                    )
                 }
                 Spacer(Modifier.height(6.dp))
                 NoteText("Sin micrófono también vale: la escena guiada de esta conversación sigue arriba, con respuestas para elegir.")
@@ -535,8 +723,10 @@ fun LiveConversationScreen(
 @Composable
 private fun LearnerExchangeBlock(
     exchange: LiveExchange,
+    exchangeIndex: Int?,
     practiceWord: String?,
-    onPracticeWord: (String) -> Unit
+    practiceExchangeIndex: Int?,
+    onPracticeWord: (LiveWordFeedback, Int?) -> Unit
 ) {
     JournalCard(oliveCard = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -595,12 +785,14 @@ private fun LearnerExchangeBlock(
         val weakest = exchange.feedback.weakestWord
         if (weakest != null) {
             Spacer(Modifier.height(10.dp))
-            val expanded = practiceWord == weakest.word
+            // Expanded only when THIS exchange's chip opened the
+            // card — the same word can be weak in several turns.
+            val expanded = practiceWord == weakest.word && practiceExchangeIndex == exchangeIndex
             PrimaryButton(
                 if (expanded) "Cerrar práctica" else "Puedes mejorar: «${weakest.word}» · ${weakest.score}%",
                 olive = !expanded,
                 modifier = Modifier.fillMaxWidth()
-            ) { onPracticeWord(weakest.word) }
+            ) { onPracticeWord(weakest, exchangeIndex) }
             Spacer(Modifier.height(4.dp))
             NoteText(weakest.reasonEs + " Toca el botón para practicar esta palabra con la profesora.")
         }
@@ -621,6 +813,9 @@ private fun LiveWordPracticeCard(
     reasonEs: String?,
     retryScore: Int?,
     isListening: Boolean,
+    retryEnabled: Boolean,
+    denialPermanent: Boolean?,
+    onOpenSettings: () -> Unit,
     tts: TtsManager,
     onHear: () -> Unit,
     onHearSlow: () -> Unit,
@@ -658,8 +853,16 @@ private fun LiveWordPracticeCard(
         PrimaryButton(
             if (isListening) "🎙 Escuchando…" else "🎙 Repetir la palabra",
             olive = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = retryEnabled
         ) { onRetry() }
+        if (denialPermanent != null) {
+            Spacer(Modifier.height(8.dp))
+            MicDenialNote(
+                permanent = denialPermanent,
+                onOpenSettings = onOpenSettings
+            )
+        }
         if (retryScore != null) {
             Spacer(Modifier.height(10.dp))
             FeedbackBox(
@@ -671,5 +874,43 @@ private fun LiveWordPracticeCard(
                 good = retryScore >= 60
             )
         }
+    }
+}
+
+/** The hosting Activity behind a Compose context, for the permission rationale check. */
+private fun Context.findActivity(): Activity? {
+    var ctx: Context? = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
+/**
+ * The permission-denial note (M2), shown by whichever mic funnel was
+ * denied. Never silent, always with a recovery path: re-ask by
+ * tapping the mic again while the system allows, or — when the
+ * denial is permanent — a button to this app's page in system
+ * Settings, where the mic can be switched back on.
+ */
+@Composable
+private fun MicDenialNote(
+    permanent: Boolean,
+    onOpenSettings: () -> Unit
+) {
+    FeedbackBox(
+        if (permanent) {
+            "El micrófono está desactivado para Aula y el sistema ya no volverá a preguntar. " +
+                "Para recuperarlo: Ajustes del teléfono → Aplicaciones → Aula → Permisos → Micrófono."
+        } else {
+            "Sin permiso de micrófono no puedo escucharte, y sin escucharte no hay conversación en vivo. " +
+                "Toca el botón de hablar cuando quieras y te lo pido otra vez."
+        },
+        good = false
+    )
+    if (permanent) {
+        Spacer(Modifier.height(8.dp))
+        GhostButton("Abrir los ajustes de la app") { onOpenSettings() }
     }
 }

@@ -264,24 +264,7 @@ class MirrorStore(context: Context) {
     }
 
     /** A card ONLY with >= 3 errors in >= 2 distinct contexts, and not dismissed. */
-    fun qualifiedPatterns(): List<PatternStat> {
-        val errors = mutableMapOf<String, Int>()
-        val contexts = mutableMapOf<String, MutableSet<String>>()
-        for (ev in events) {
-            if (ev.correct) continue
-            errors[ev.pattern] = (errors[ev.pattern] ?: 0) + 1
-            contexts.getOrPut(ev.pattern) { mutableSetOf() }.add(ev.context)
-        }
-        val out = mutableListOf<PatternStat>()
-        for ((k, n) in errors) {
-            val nctx = contexts[k]?.size ?: 0
-            if (n >= 3 && nctx >= 2 && k !in dismissed) {
-                out.add(PatternStat(k, n, nctx))
-            }
-        }
-        out.sortByDescending { it.errors }
-        return out
-    }
+    fun qualifiedPatterns(): List<PatternStat> = qualifiedPatternsOf(events, dismissed)
 
     fun activePatternsRanked(): List<PatternStat> =
         qualifiedPatterns().filter { statusOf(it.key) != "dominado" }
@@ -329,6 +312,58 @@ class SettingsStore(context: Context) {
 
 // ---------------------------------------------------------------- patterns
 
+/**
+ * The Mirror naming rule as a pure function of the event log, so it
+ * can be unit-tested without Android: a pattern is named ONLY with
+ * >= 3 error events across >= 2 distinct contexts, and never when
+ * the learner dismissed it. [MirrorStore.qualifiedPatterns] is this
+ * function over the live log — there is one rule, not two.
+ */
+fun qualifiedPatternsOf(events: List<MirrorEvent>, dismissed: List<String>): List<PatternStat> {
+    val errors = mutableMapOf<String, Int>()
+    val contexts = mutableMapOf<String, MutableSet<String>>()
+    for (ev in events) {
+        if (ev.correct) continue
+        errors[ev.pattern] = (errors[ev.pattern] ?: 0) + 1
+        contexts.getOrPut(ev.pattern) { mutableSetOf() }.add(ev.context)
+    }
+    val out = mutableListOf<PatternStat>()
+    for ((k, n) in errors) {
+        val nctx = contexts[k]?.size ?: 0
+        if (n >= 3 && nctx >= 2 && k !in dismissed) {
+            out.add(PatternStat(k, n, nctx))
+        }
+    }
+    out.sortByDescending { it.errors }
+    return out
+}
+
+/**
+ * The phantom-E family is ONE Mirror pattern, not one key per word:
+ * adding a vowel before an initial /s/ ("esister", "esalad",
+ * "esoccer") is a single habit, and a per-word key could never reach
+ * the naming rule (the Guide — the only other logger of
+ * pronunciation events — teaches four unrelated words). Live
+ * conversation suspects log this key in the "conversaciones"
+ * context; GuideCard self-ratings on an s-trap guide word log it in
+ * the Guide's own contexts, which is the family's honest second
+ * surface. Per-word detail lives in the live session's recap (the
+ * store's event shape has no detail field).
+ */
+const val PHANTOM_E_PATTERN_KEY = "pronunciation_phantom_e"
+
+/**
+ * True when [word] belongs to the phantom-E family: it starts with
+ * "s" but not "sh" — the same gate PronunciationBoundary applies to
+ * trap forms. Of the original guide words, none qualifies (ship and
+ * sheep are "sh"; went and three do not start with "s"), so this
+ * gate leaves every existing Guide rating exactly as it was.
+ */
+fun isPhantomEFamilyWord(word: String): Boolean {
+    val w = word.trim().lowercase()
+    return w.length > 1 && w.startsWith("s") && !w.startsWith("sh")
+}
+
 data class PatternInfo(val name: String, val explain: String, val kind: String, val word: String = "")
 
 val PATTERN_INFO: Map<String, PatternInfo> = mapOf(
@@ -351,6 +386,10 @@ val PATTERN_INFO: Map<String, PatternInfo> = mapOf(
     "conversation_turn" to PatternInfo(
         "Responder en conversación",
         "Las respuestas completas y corteses («That is all, thank you») funcionan mejor que traducir palabra por palabra.", "syntax"
+    ),
+    "pronunciation_phantom_e" to PatternInfo(
+        "La «e» fantasma antes de la /s/",
+        "Cuando una palabra empieza con el silbido /s/ (sister, salad, soccer, store…), le añades una vocal que no va: «esister». En inglés la /s/ arranca directa: primero el silbido y luego la palabra, sin vocal antes. En la Guía lo practicas con «sister».", "guide", "sister"
     ),
     "listening" to PatternInfo(
         "Escuchar con precisión",
@@ -407,6 +446,7 @@ fun convForPattern(key: String): String = when (key) {
     "syntax_word_order" -> "cafe"
     "cognates" -> "cafe"
     "conversation_turn" -> "hotel"
+    "pronunciation_phantom_e" -> "ayer"
     else -> "cafe"
 }
 

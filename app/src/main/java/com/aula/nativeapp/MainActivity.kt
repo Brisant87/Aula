@@ -332,10 +332,11 @@ fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
 }
 
 @Composable
-fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = modifier,
+        enabled = enabled,
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (olive) Olive else Terracotta,
@@ -831,6 +832,21 @@ fun GuideCard(
             }
             else -> {
                 ratedNote = "Anotado: casi. La práctica corta y seguida es la que la fija."
+            }
+        }
+        // The phantom-E family pattern: a self-rating on an s-trap
+        // guide word is also evidence for the ONE family pattern
+        // (the live conversations are its other surface — together
+        // they give the pattern the >= 2 contexts Mirror's naming
+        // rule demands). The gate leaves the four original guide
+        // words untouched: ship/sheep are "sh", went/three are not
+        // s-initial, so nothing about their ratings changes.
+        if (isPhantomEFamilyWord(gw.word)) {
+            when (kind) {
+                "good" -> store.logEvent(PHANTOM_E_PATTERN_KEY, context, true)
+                "bad" -> store.logEvent(PHANTOM_E_PATTERN_KEY, context, false)
+                // "mid" logs nothing — the per-word rating above
+                // does the same; a "casi" is not evidence either way.
             }
         }
         bump()

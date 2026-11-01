@@ -234,7 +234,27 @@ val TRANSFER: List<TransferItem> = listOf(
     TransferItem("t13", "conversation_turn", kind = "choice",
         prompt = "Un desconocido amable te dice: «Can I help you?» ¿Qué respondes?",
         options = listOf("Yes, please. I am looking for the station.", "Yes, help I can, station looking.", "Looking for station, I am yes."), answer = 0,
-        rule = "Aceptar ayuda con la frase completa", trap = "«Yes, please» + la frase completa: «I am looking for the station». El orden sujeto–verbo no se mueve.")
+        rule = "Aceptar ayuda con la frase completa", trap = "«Yes, please» + la frase completa: «I am looking for the station». El orden sujeto–verbo no se mueve."),
+    // The phantom-E family's transfer items: new situations built
+    // from the live banks' s-words (soccer, salad, sister, store) —
+    // the words are the curriculum's, the questions were never
+    // practiced anywhere.
+    TransferItem("pe1", "pronunciation_phantom_e", kind = "choice",
+        prompt = "Vas a jugar fútbol con amigos. ¿Cuál frase suena bien en inglés?",
+        options = listOf("I play esoccer on Saturdays.", "I play soccer on Saturdays.", "I play shoccer on Saturdays."), answer = 1,
+        rule = "La /s/ arranca directa: «soccer»", trap = "«Esoccer» lleva la «e» fantasma: en inglés el silbido /s/ va primero, sin vocal antes."),
+    TransferItem("pe2", "pronunciation_phantom_e", kind = "choice",
+        prompt = "En la cafetería pides una ensalada. ¿Cómo suena bien?",
+        options = listOf("A esalad, please.", "A shalad, please.", "A salad, please."), answer = 2,
+        rule = "«Salad» empieza con /s/ directa", trap = "Nada de «esalad»: la «e» fantasma no existe en inglés."),
+    TransferItem("pe3", "pronunciation_phantom_e", kind = "choice",
+        prompt = "Presentas a tu hermana: «This is my…». ¿Qué palabra suena bien?",
+        options = listOf("esister", "sister", "shister"), answer = 1,
+        rule = "«Sister» con /s/ directa", trap = "«Esister» es la trampa clásica: la /s/ no necesita vocal de arranque."),
+    TransferItem("pe4", "pronunciation_phantom_e", kind = "choice",
+        prompt = "Compraste zapatos en una tienda. ¿Cuál frase suena bien?",
+        options = listOf("I went to the estore.", "I went to the store.", "I went to the shore."), answer = 1,
+        rule = "«Store» empieza con /s/ directa", trap = "«Estore» lleva la «e» fantasma; y «shore» es otra palabra: la orilla.")
 )
 
 // ---------------------------------------------------------------- LA GUÍA
@@ -268,12 +288,22 @@ val GUIDE_WORDS: Map<String, GuideWord> = listOf(
             GuideStep("th", "θ", "th", "«th»: la punta de la lengua asoma entre los dientes y soplas suave."),
             GuideStep("r", "r", "tongueup", "«r» inglesa: lengua atrás, sin tocar nada, sin vibrar."),
             GuideStep("ee", "iː", "wide", "«ee» larga con sonrisa: threeee.")
+        )),
+    GuideWord("sister", "sister", "/ˈsɪs.tər/", "hermana",
+        "La trampa es arrancar con una vocal que no va: «esister». La /s/ inglesa empieza directa, con el silbido.",
+        listOf(
+            GuideStep("s", "s", "teeth", "«s» inicial DIRECTA: el silbido sale sin ninguna vocal antes. Nada de «e» de arranque."),
+            GuideStep("i", "ɪ", "relaxed", "«i» corta y relajada, como la de ship."),
+            GuideStep("s", "s", "teeth", "La segunda «s» también silba: sis-ter."),
+            GuideStep("t", "t", "tongueup", "«t»: la punta de la lengua toca detrás de los dientes y suelta el aire."),
+            GuideStep("er", "ər", "relaxed", "«er» final suave y relajada.")
         ))
 ).associateBy { it.key }
 
 val GUIDE_GROUPS: List<Pair<String, List<String>>> = listOf(
     "Contraste: i corta / ee larga" to listOf("ship", "sheep"),
     "La «th» y sonidos nuevos" to listOf("three"),
+    "La «e» fantasma: la /s/ directa" to listOf("sister"),
     "Palabras de todos los días" to listOf("went")
 )
 

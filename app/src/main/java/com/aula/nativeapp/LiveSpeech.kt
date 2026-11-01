@@ -3,6 +3,8 @@ package com.aula.nativeapp
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -563,9 +565,14 @@ object LiveGrader {
         return result to feedback
     }
 
-    /** True when the input is a recognition failure marker, not a reply. */
-    fun isSilenceMarker(spokenText: String): Boolean =
-        spokenText.isBlank() || spokenText.equals("(Sin audio detectado)", ignoreCase = true)
+    /**
+     * True when the input is a recognition failure, not a reply.
+     * Blank is the ONLY live signal: the probe never emits marker
+     * strings (an earlier "(Sin audio detectado)" clause pinned a
+     * path nothing produces — removed). ConversationScorer keeps its
+     * own silence branch for that string as harmless defense.
+     */
+    fun isSilenceMarker(spokenText: String): Boolean = spokenText.isBlank()
 }
 
 // ------------------------------------------------------------------ the recognizer probe
@@ -595,16 +602,79 @@ class LiveSpeechProbe(context: Context) {
 
     private var recognizer: SpeechRecognizer? = null
 
+    // -- Watchdog state (Mo4). Some devices' recognition services
+    // accept startListening and then never call back at all — no
+    // result, no error, the attempt hangs forever with the mic
+    // "listening". Two counters tell a live service from a dead one:
+    // ANY callback proves the service is alive; a settlement
+    // (onResults/onError) proves the attempt finished.
+    private val watchdogHandler = Handler(Looper.getMainLooper())
+    private var startWatchdog: Runnable? = null
+    private var stopWatchdog: Runnable? = null
+    private var callbacksSeen = 0
+    private var settlementsSeen = 0
+
+    private fun cancelWatchdogs() {
+        startWatchdog?.let { watchdogHandler.removeCallbacks(it) }
+        stopWatchdog?.let { watchdogHandler.removeCallbacks(it) }
+        startWatchdog = null
+        stopWatchdog = null
+    }
+
+    /**
+     * The attempt is dead: disarm it and surface a NON-scored error
+     * line. Nothing is graded on a timeout, ever — the consumer's
+     * error path closes the attempt exactly like a recognizer error,
+     * and a recognizer error logs nothing.
+     */
+    private fun expireAttempt() {
+        cancelWatchdogs()
+        try {
+            recognizer?.cancel()
+        } catch (e: Exception) {
+        }
+        _isListening.value = false
+        _lastEvidence.value = null
+        _micError.value =
+            "El micrófono no respondió. Es un fallo del servicio de voz del teléfono, no tuyo: toca Hablar e intenta de nuevo."
+    }
+
     private val listener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {}
-        override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
-        override fun onBufferReceived(buffer: ByteArray?) {}
+        override fun onReadyForSpeech(params: Bundle?) {
+            callbacksSeen++
+        }
+
+        override fun onBeginningOfSpeech() {
+            callbacksSeen++
+        }
+
+        override fun onRmsChanged(rmsdB: Float) {
+            callbacksSeen++
+        }
+
+        override fun onBufferReceived(buffer: ByteArray?) {
+            callbacksSeen++
+        }
+
         override fun onEndOfSpeech() {
+            callbacksSeen++
             _isListening.value = false
+            // Speech ended: a result or an error is now owed. If
+            // neither lands within the settlement grace, the attempt
+            // expires ungraded rather than hanging armed.
+            stopWatchdog?.let { watchdogHandler.removeCallbacks(it) }
+            val baseline = settlementsSeen
+            val watchdog = Runnable {
+                if (settlementsSeen == baseline) expireAttempt()
+            }
+            stopWatchdog = watchdog
+            watchdogHandler.postDelayed(watchdog, STOP_SETTLE_GRACE_MS)
         }
 
         override fun onError(error: Int) {
+            callbacksSeen++
+            settlementsSeen++
+            cancelWatchdogs()
             _isListening.value = false
             // No result, no evidence: an error turn must leave nothing
             // behind that a consumer could mistake for a graded attempt.
@@ -629,6 +699,9 @@ class LiveSpeechProbe(context: Context) {
         }
 
         override fun onResults(results: Bundle?) {
+            callbacksSeen++
+            settlementsSeen++
+            cancelWatchdogs()
             _isListening.value = false
             _micError.value = null
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -650,8 +723,13 @@ class LiveSpeechProbe(context: Context) {
             _lastRecognition.value = spoken
         }
 
-        override fun onPartialResults(partialResults: Bundle?) {}
-        override fun onEvent(eventType: Int, params: Bundle?) {}
+        override fun onPartialResults(partialResults: Bundle?) {
+            callbacksSeen++
+        }
+
+        override fun onEvent(eventType: Int, params: Bundle?) {
+            callbacksSeen++
+        }
     }
 
     // Declared AFTER `listener`: Kotlin initializes properties in
@@ -679,6 +757,7 @@ class LiveSpeechProbe(context: Context) {
     fun startListening(promptText: String) {
         _lastRecognition.value = null
         _lastEvidence.value = null
+        cancelWatchdogs()
         val rec = recognizer
         if (rec == null) {
             // No recogniser on this device: never report "listening".
@@ -696,6 +775,17 @@ class LiveSpeechProbe(context: Context) {
             rec.startListening(intent)
             _isListening.value = true
             _micError.value = null
+            // No-callback watchdog: if literally NO callback arrives
+            // within the window, the service is dead (the Samsung
+            // silent-failure class). The window is generous — a live
+            // service fires onReadyForSpeech/onRmsChanged within a
+            // second or two — so it can never cut a real recognition.
+            val baseline = callbacksSeen
+            val watchdog = Runnable {
+                if (_isListening.value && callbacksSeen == baseline) expireAttempt()
+            }
+            startWatchdog = watchdog
+            watchdogHandler.postDelayed(watchdog, NO_CALLBACK_WATCHDOG_MS)
         } catch (e: Exception) {
             _isListening.value = false
             _micError.value = "No se pudo iniciar el micrófono. Revisa el permiso de micrófono."
@@ -708,6 +798,19 @@ class LiveSpeechProbe(context: Context) {
         } catch (e: Exception) {
         }
         _isListening.value = false
+        // Settlement grace (the Cognata studio's stop+4s family):
+        // after a stop, the service owes a result or an error; if
+        // neither lands within the grace, the attempt expires
+        // ungraded instead of hanging armed.
+        startWatchdog?.let { watchdogHandler.removeCallbacks(it) }
+        startWatchdog = null
+        stopWatchdog?.let { watchdogHandler.removeCallbacks(it) }
+        val baseline = settlementsSeen
+        val watchdog = Runnable {
+            if (settlementsSeen == baseline) expireAttempt()
+        }
+        stopWatchdog = watchdog
+        watchdogHandler.postDelayed(watchdog, STOP_SETTLE_GRACE_MS)
     }
 
     /** Drops any leftover recognition/evidence (e.g. before a fresh live session). */
@@ -716,7 +819,13 @@ class LiveSpeechProbe(context: Context) {
         _lastEvidence.value = null
     }
 
+    /** Drops the current error line (e.g. it belonged to a superseded attempt). */
+    fun clearMicError() {
+        _micError.value = null
+    }
+
     fun destroy() {
+        cancelWatchdogs()
         try {
             recognizer?.destroy()
         } catch (e: Exception) {
@@ -729,5 +838,11 @@ class LiveSpeechProbe(context: Context) {
         // scores; this SDK exposes no compile-time constant for it
         // (the same lesson Cognata's SpeechManager recorded).
         private const val RESULTS_CONFIDENCE_SCORES_KEY = "results_confidence_scores"
+
+        /** No callback at all within this window after a start = dead service. */
+        private const val NO_CALLBACK_WATCHDOG_MS = 15_000L
+
+        /** After a stop, a result/error is owed within this grace. */
+        private const val STOP_SETTLE_GRACE_MS = 4_000L
     }
 }
