@@ -10,7 +10,7 @@ import org.junit.Test
 /**
  * Conversación en vivo flow-engine tests — the Aula mirror of
  * Cognata's LiveConversationEngineTest coverage, over Aula's own
- * three conversation banks (cafe / ayer / hotel).
+ * nine conversation banks.
  *
  * Harness: app/build.gradle.kts declares testImplementation
  * junit 4.13.2 and CI (.github/workflows/android.yml) runs
@@ -20,7 +20,7 @@ import org.junit.Test
  */
 class LiveConversationEngineTest {
 
-    private val bankIds = listOf("cafe", "ayer", "hotel")
+    private val bankIds = listOf("cafe", "ayer", "hotel", "mercado", "trabajo", "direcciones", "medico", "aeropuerto", "restaurante")
 
     @Test
     fun `every conversation has a complete live bank and the opening reuses the guided first line`() {
