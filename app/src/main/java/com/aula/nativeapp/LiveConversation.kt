@@ -1673,7 +1673,7 @@ object LiveConversationBanks {
                     partnerLine = "Do you have your insurance card with you?",
                     objectiveEs = "Di que traes tu tarjeta del seguro.",
                     modelReplies = listOf(
-                        "Yes, here is my card.",
+                        "Yes, here is my insurance card.",
                         "Yes, I have it in my bag."
                     ),
                     targetKeywords = listOf("insurance", "card", "here", "bag"),
