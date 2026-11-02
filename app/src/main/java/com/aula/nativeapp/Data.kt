@@ -4,9 +4,10 @@ package com.aula.nativeapp
  * Aula native — content data.
  *
  * Ported from the web app (~/workspace/aula-apk/app-assets/index.html).
- * Compact subset: all 17 syntax items, all 12 transfer items, 18 cognates,
- * 4 guide words, 3 conversations, all 6 listening items, 13 formulas,
- * 6 cognate rules, 7 day plans and the 4 Camino levels.
+ * Content: all 17 syntax items, the transfer pool (incl. la familia de la
+ * «e» fantasma), all 46 cognates, 21 guide words (the web app's 20 + sister),
+ * all 9 conversations, all 6 listening items, 13 formulas, 6 cognate rules,
+ * 7 day plans and the 4 Camino levels.
  */
 
 data class Cognate(
@@ -101,7 +102,35 @@ val COGNATES: List<Cognate> = listOf(
     Cognate("Delicious", "Delicioso", "oso", "di-LÍ-shos", "The dinner was delicious.", "-oso se convierte en -ous."),
     Cognate("Actually", "En realidad / de hecho", "falsos", "ÁK-shu-uh-li", "Actually, I disagree with that point.", "¡Trampa! NO significa «actualmente»; eso es «currently»."),
     Cognate("Exit", "Salida", "falsos", "ÉK-sit", "Take the emergency exit.", "¡Trampa! NO significa «éxito»; eso es «success»."),
-    Cognate("Library", "Biblioteca", "falsos", "LÁI-bre-ri", "I study at the library.", "¡Trampa! «Librería» (tienda) es «bookstore».")
+    Cognate("Library", "Biblioteca", "falsos", "LÁI-bre-ri", "I study at the library.", "¡Trampa! «Librería» (tienda) es «bookstore»."),
+    Cognate("Conversation", "Conversación", "cion", "kon-ver-SÉI-shon", "We had a long conversation.", "-ción se convierte en -tion."),
+    Cognate("Reality", "Realidad", "dad", "ri-Á-li-ti", "Face reality with confidence.", "-dad se convierte en -ty."),
+    Cognate("Directly", "Directamente", "mente", "di-RÉKT-li", "Speak to me directly.", "-mente se convierte en -ly."),
+    Cognate("Curious", "Curioso", "oso", "KIÚ-ri-os", "Cats are naturally curious.", "-oso se convierte en -ous."),
+    Cognate("Nervous", "Nervioso", "oso", "NÉR-vos", "Don’t feel nervous on stage.", "-oso se convierte en -ous."),
+    Cognate("Embarrassed", "Avergonzado", "falsos", "em-BÁ-rast", "I felt embarrassed when I dropped the tray.", "¡Trampa! NO significa «embarazada»; eso es «pregnant»."),
+    Cognate("Carpet", "Alfombra", "falsos", "KÁR-pet", "The living room has a soft carpet.", "¡Trampa! NO significa «carpeta»; eso es «folder»."),
+    Cognate("Doctor", "Doctor / médico", "perfectos", "DÓK-tor", "The doctor is very kind.", "Se escribe igual; en inglés suena más corto."),
+    Cognate("Actor", "Actor", "perfectos", "ÁK-tor", "The actor is famous in Spain.", "Idéntica en los dos idiomas."),
+    Cognate("Hotel", "Hotel", "perfectos", "hou-TÉL", "The hotel is near the beach.", "Igual escrita; el énfasis va al final."),
+    Cognate("Taxi", "Taxi", "perfectos", "TÁK-si", "We need a taxi to the airport.", "La misma palabra en casi todo el mundo."),
+    Cognate("Radio", "Radio", "perfectos", "RÉI-di-ou", "Turn on the radio, please.", "Se escribe igual; se lee «réidiou»."),
+    Cognate("Piano", "Piano", "perfectos", "pi-Á-nou", "She plays the piano every day.", "Idéntica; cambia solo el ritmo."),
+    Cognate("Video", "Video / vídeo", "perfectos", "VÍ-di-ou", "Watch this video carefully.", "Igual escrita en los dos idiomas."),
+    Cognate("Chocolate", "Chocolate", "perfectos", "CHÓ-ko-let", "I love dark chocolate.", "En inglés tiene una sílaba menos: suena «chóklet»."),
+    Cognate("Nation", "Nación", "cion", "NÉI-shon", "It is a proud nation.", "-ción se convierte en -tion."),
+    Cognate("Education", "Educación", "cion", "e-yu-KÉI-shon", "Education opens doors.", "-ción se convierte en -tion."),
+    Cognate("Vacation", "Vacaciones", "cion", "vei-KÉI-shon", "We are on vacation in July.", "En inglés suele ir en singular: «vacation»."),
+    Cognate("University", "Universidad", "dad", "iu-ni-VÉR-si-ti", "The university is very old.", "-dad se convierte en -ty."),
+    Cognate("City", "Ciudad", "dad", "SÍ-ti", "This city is beautiful.", "-dad se convierte en -ty; la «c» suena «s»."),
+    Cognate("Quality", "Calidad", "dad", "KUÓ-li-ti", "Quality matters more than speed.", "-dad se convierte en -ty."),
+    Cognate("Normally", "Normalmente", "mente", "NÓR-muh-li", "I normally walk to work.", "-mente se convierte en -ly."),
+    Cognate("Totally", "Totalmente", "mente", "TÓU-tuh-li", "I totally agree with you.", "-mente se convierte en -ly."),
+    Cognate("Possibly", "Posiblemente", "mente", "PÓ-si-bli", "Possibly it rains tomorrow.", "-mente se convierte en -ly."),
+    Cognate("Generous", "Generoso", "oso", "YÉ-ne-ros", "He is a generous friend.", "-oso se convierte en -ous."),
+    Cognate("Precious", "Precioso", "oso", "PRÉ-shos", "Time is precious.", "-oso se convierte en -ous."),
+    Cognate("Large", "Grande", "falsos", "LARCH", "It is a large house.", "¡Trampa! NO significa «largo»; eso es «long»."),
+    Cognate("Success", "Éxito", "falsos", "sok-SÉS", "The plan was a success.", "¡Trampa! Es «éxito», no «salida» (eso es «exit»).")
 )
 
 val RULES: List<RuleInfo> = listOf(
@@ -297,14 +326,128 @@ val GUIDE_WORDS: Map<String, GuideWord> = listOf(
             GuideStep("s", "s", "teeth", "La segunda «s» también silba: sis-ter."),
             GuideStep("t", "t", "tongueup", "«t»: la punta de la lengua toca detrás de los dientes y suelta el aire."),
             GuideStep("er", "ər", "relaxed", "«er» final suave y relajada.")
+        )),
+    GuideWord("work", "work", "/wɜːrk/", "trabajo / trabajar",
+        "El corazón de «work» es el sonido /ɜː/: un sonido central que no existe en español. Boca casi quieta, como pensar «mmm».",
+        listOf(
+            GuideStep("w", "w", "round", "«w»: labios en círculo pequeño, como dar un beso al aire."),
+            GuideStep("or", "ɜːr", "relaxed", "«or» suena /ɜːr/: boca relajada, lengua en el centro, sin abrir. No es «or» española."),
+            GuideStep("k", "k", "open", "«k»: un golpe seco de aire desde el fondo de la garganta.")
+        )),
+    GuideWord("bird", "bird", "/bɜːrd/", "pájaro",
+        "«Bird» lleva el mismo /ɜː/ de «work»: buuurd. Si dices «berd», suena a otra cosa.",
+        listOf(
+            GuideStep("b", "b", "closed", "«b»: labios cerrados que se abren con un pequeño estallido."),
+            GuideStep("ir", "ɜːr", "relaxed", "«ir» suena /ɜːr/: boca casi quieta, sonido largo y central."),
+            GuideStep("d", "d", "tongueup", "«d»: la punta de la lengua toca detrás de los dientes de arriba.")
+        )),
+    GuideWord("cat", "cat", "/kæt/", "gato",
+        "La «a» de «cat» (/æ/) vive entre la a y la e: abre la boca como para decir «e» pero di «a».",
+        listOf(
+            GuideStep("c", "k", "open", "«c» suena «k»: golpe de aire desde la garganta, boca abierta."),
+            GuideStep("a", "æ", "open", "«a» /æ/: abre bien la mandíbula, entre «a» y «e»: caaat."),
+            GuideStep("t", "t", "tongueup", "«t»: lengua detrás de los dientes de arriba, toque seco.")
+        )),
+    GuideWord("bed", "bed", "/bed/", "cama",
+        "«Bed» es corta y seca; no la estires o sonará «bade». Compárala con «bad» en tu oído, poco a poco.",
+        listOf(
+            GuideStep("b", "b", "closed", "«b»: labios cerrados, apertura breve con voz."),
+            GuideStep("e", "e", "open", "«e» breve y abierta, como en «mesa» pero más corta."),
+            GuideStep("d", "d", "tongueup", "«d»: punta de la lengua detrás de los dientes de arriba.")
+        )),
+    GuideWord("book", "book", "/bʊk/", "libro",
+        "La «oo» de «book» es CORTA (/ʊ/). La larga (/uː/) es la de «food»: book ≠ fuuud.",
+        listOf(
+            GuideStep("b", "b", "closed", "«b»: labios cerrados, apertura breve."),
+            GuideStep("oo", "ʊ", "round", "«oo» corta y relajada: labios apenas redondeados, sonido breve."),
+            GuideStep("k", "k", "open", "«k»: golpe seco de aire desde la garganta.")
+        )),
+    GuideWord("food", "food", "/fuːd/", "comida",
+        "La «oo» de «food» es LARGA (/uː/): fuuud. Contraste directo con la corta de «book».",
+        listOf(
+            GuideStep("f", "f", "teeth", "«f»: los dientes de arriba muerden suave el labio de abajo y soplas."),
+            GuideStep("oo", "uː", "round", "«oo» larga: labios bien redondos y estira el sonido: fuuud."),
+            GuideStep("d", "d", "tongueup", "«d»: punta de la lengua detrás de los dientes de arriba.")
+        )),
+    GuideWord("day", "day", "/deɪ/", "día",
+        "«Day» termina en un deslizamiento: de «e» a «i» sin cortar. La sonrisa hace el trabajo.",
+        listOf(
+            GuideStep("d", "d", "tongueup", "«d»: punta de la lengua detrás de los dientes de arriba."),
+            GuideStep("ay", "eɪ", "wide", "«ay» /eɪ/: empieza como «e» y desliza hacia «i» con una sonrisa: deeei.")
+        )),
+    GuideWord("night", "night", "/naɪt/", "noche",
+        "La «gh» de «night» no se pronuncia: suena «nait». La «i» se desliza como en «day».",
+        listOf(
+            GuideStep("n", "n", "tongueup", "«n»: punta de la lengua detrás de los dientes de arriba, aire por la nariz."),
+            GuideStep("igh", "aɪ", "wide", "«igh» suena /aɪ/: de «a» abierta desliza a «i»: naaait. La «gh» es muda."),
+            GuideStep("t", "t", "tongueup", "«t»: misma posición de la «n», soltando el aire seco.")
+        )),
+    GuideWord("water", "water", "/ˈwɔːtər/", "agua",
+        "En EE. UU. la «t» del centro se suaviza y suena casi como una «d» rápida: «uóder». No pasa nada si la marcas: también se entiende.",
+        listOf(
+            GuideStep("w", "w", "round", "«w»: labios en círculo pequeño."),
+            GuideStep("a", "ɔː", "open", "«a» suena /ɔː/: boca abierta y sonido largo, parecido a una «o» abierta."),
+            GuideStep("t", "t", "tongueup", "«t» del centro: toque rápido y suave, casi una «d»."),
+            GuideStep("er", "ər", "relaxed", "«er» final: sonido débil y relajado, el más flojo de la palabra.")
+        )),
+    GuideWord("think", "think", "/θɪŋk/", "pensar",
+        "«Think» junta dos sonidos nuevos: la «th» sorda del inicio y el «ng» nasal del final (como en «banco», pero sostenido).",
+        listOf(
+            GuideStep("th", "θ", "th", "«th»: la punta de la lengua asoma entre los dientes y soplas suave."),
+            GuideStep("i", "ɪ", "relaxed", "«i» corta y relajada, entre la i y la e."),
+            GuideStep("nk", "ŋk", "tongueup", "«nk»: el fondo de la lengua sube y el sonido sale por la nariz, cerrado con una «k» seca.")
+        )),
+    GuideWord("time", "time", "/taɪm/", "tiempo / hora",
+        "«Time» es un diptongo: empieza en «a» y resbala a «i» en un solo golpe de voz: «taim».",
+        listOf(
+            GuideStep("t", "t", "tongueup", "«t»: la punta de la lengua toca detrás de los dientes y suelta el aire seco."),
+            GuideStep("i", "aɪ", "wide", "«i» larga: abre con «a» y resbala sonriendo hacia «i», un solo movimiento."),
+            GuideStep("m", "m", "closed", "«m»: labios cerrados y el sonido vibra por la nariz.")
+        )),
+    GuideWord("make", "make", "/meɪk/", "hacer",
+        "La «a» de make no es «a»: es «ei», como en «rey» pero más breve. Y la «e» final no suena.",
+        listOf(
+            GuideStep("m", "m", "closed", "«m»: labios cerrados, zumbido nasal."),
+            GuideStep("a", "eɪ", "wide", "«a» suena «ei»: empieza en «e» y resbala a «i», con la boca estirada."),
+            GuideStep("k", "k", "open", "«k»: el fondo de la lengua sube y corta el aire de golpe. La «e» final no existe.")
+        )),
+    GuideWord("park", "park", "/pɑːrk/", "parque / estacionar",
+        "La «ar» es larga y abierta, y la «r» inglesa nunca vibra: la lengua se curva hacia atrás sin tocar nada.",
+        listOf(
+            GuideStep("p", "p", "closed", "«p»: labios cerrados y un soplo corto al abrir."),
+            GuideStep("ar", "ɑːr", "open", "«ar» larga y abierta, como un «a» que dura; la lengua se curva atrás sin vibrar."),
+            GuideStep("k", "k", "open", "«k»: corte seco con el fondo de la lengua.")
+        )),
+    GuideWord("sun", "sun", "/sʌn/", "sol",
+        "La «u» de sun es el sonido central «ʌ»: ni «a» ni «o», un golpe corto y flojo desde la garganta.",
+        listOf(
+            GuideStep("s", "s", "teeth", "«s»: dientes casi juntos y el aire silba."),
+            GuideStep("u", "ʌ", "relaxed", "«u» central: boca apenas abierta, sonido corto y relajado."),
+            GuideStep("n", "n", "tongueup", "«n»: la punta de la lengua toca arriba y el sonido sale por la nariz.")
+        )),
+    GuideWord("love", "love", "/lʌv/", "amar / amor",
+        "«Love» engaña por escrito: se dice «lav» corto, con la «v» vibrando entre labio y dientes.",
+        listOf(
+            GuideStep("l", "l", "tongueup", "«l»: la punta de la lengua toca detrás de los dientes de arriba."),
+            GuideStep("o", "ʌ", "relaxed", "«o» suena «ʌ»: el golpe corto y central, como en «sun»."),
+            GuideStep("ve", "v", "teeth", "«v»: el labio de abajo toca los dientes de arriba y vibra. La «e» final no suena.")
+        )),
+    GuideWord("home", "home", "/hoʊm/", "casa / hogar",
+        "«Home» resbala de «o» a «u» en un solo sonido: «joum». Empieza con una «h» aspirada, como un suspiro.",
+        listOf(
+            GuideStep("h", "h", "open", "«h»: un suspiro suave desde la garganta, sin tocar nada."),
+            GuideStep("o", "oʊ", "round", "«o» resbala a «u»: los labios se cierran en círculo al final."),
+            GuideStep("m", "m", "closed", "«m»: labios cerrados, zumbido nasal para terminar.")
         ))
 ).associateBy { it.key }
 
 val GUIDE_GROUPS: List<Pair<String, List<String>>> = listOf(
     "Contraste: i corta / ee larga" to listOf("ship", "sheep"),
-    "La «th» y sonidos nuevos" to listOf("three"),
+    "Contraste: u corta / uu larga" to listOf("book", "food"),
+    "La «th» y sonidos nuevos" to listOf("three", "think"),
     "La «e» fantasma: la /s/ directa" to listOf("sister"),
-    "Palabras de todos los días" to listOf("went")
+    "Palabras de todos los días" to listOf("went", "cat", "bed", "day", "night", "sun", "home"),
+    "Más palabras de siempre" to listOf("work", "bird", "water", "time", "make", "park", "love")
 )
 
 // ---------------------------------------------------------------- CONVERSACIONES
@@ -351,6 +494,90 @@ val CONVERSATIONS: List<Conversation> = listOf(
             ConvOption("Thank you very much.", true, "conversation_turn"),
             ConvOption("Thank very much you.", false, "syntax_word_order"),
             ConvOption("Key thanks, room go I.", false, "syntax_word_order")), "Cerrar con cortesía completa siempre funciona.")
+    )),
+    Conversation("mercado", "En el mercado", "Postal · Nivel 1", listOf(
+        ConvTurn("Vendedora", "Hello! Can I help you?", listOf(
+            ConvOption("Yes, I am looking for fresh bread.", true, "conversation_turn"),
+            ConvOption("I looking bread fresh.", false, "syntax_word_order"),
+            ConvOption("Bread I want fresh is.", false, "syntax_word_order")), "«I am looking for» = estoy buscando; «fresh» va antes de «bread»."),
+        ConvTurn("Vendedora", "Of course. How many?", listOf(
+            ConvOption("Two, please.", true, "conversation_turn"),
+            ConvOption("Please two me give.", false, "syntax_word_order"),
+            ConvOption("Two of those is.", false, "conversation_turn")), "En el mercado, breve y cortés funciona."),
+        ConvTurn("Vendedora", "Here you are. Anything else?", listOf(
+            ConvOption("No, thank you very much.", true, "conversation_turn"),
+            ConvOption("No, thank very much you.", false, "syntax_word_order"),
+            ConvOption("Is all.", false, "conversation_turn")), "«Thank you very much» — el orden es fijo.")
+    )),
+    Conversation("trabajo", "Primer día de trabajo", "Postal · Trabajo", listOf(
+        ConvTurn("La jefa", "Welcome to the team! Do you speak English?", listOf(
+            ConvOption("Yes, I speak a little English.", true, "conversation_turn"),
+            ConvOption("Yes, I does speak English.", false, "syntax_present_questions"),
+            ConvOption("English I speak yes.", false, "syntax_word_order")), "Con «I» el verbo va sin -s y sin «does»: «I speak»."),
+        ConvTurn("La jefa", "Does the office open at nine?", listOf(
+            ConvOption("Yes, it opens at nine.", true, "conversation_turn"),
+            ConvOption("Yes, it does opens at nine.", false, "syntax_present_questions"),
+            ConvOption("Opens nine at it yes.", false, "syntax_word_order")), "En la respuesta corta vuelve la -s: «it opens». El «does» era solo para la pregunta."),
+        ConvTurn("La jefa", "Do you have any questions for me?", listOf(
+            ConvOption("Yes. Where do I start?", true, "syntax_present_questions"),
+            ConvOption("Where I do start?", false, "syntax_present_questions"),
+            ConvOption("Questions I have yes, start where?", false, "syntax_word_order")), "Pregunta Wh completa: «Where do I start?» — palabra, do, sujeto, verbo.")
+    )),
+    Conversation("direcciones", "Pidiendo direcciones", "Postal · Ciudad", listOf(
+        ConvTurn("Una vecina", "Hello! Can I help you?", listOf(
+            ConvOption("Yes, please. Where is the museum?", true, "syntax_present_questions"),
+            ConvOption("Where the museum is?", false, "syntax_present_questions"),
+            ConvOption("Museum where is?", false, "syntax_word_order")), "Con el verbo «is» la pregunta invierte: «Where is the museum?»"),
+        ConvTurn("Una vecina", "It is next to the library, two blocks away.", listOf(
+            ConvOption("Is it far from here?", true, "syntax_present_questions"),
+            ConvOption("It far is from here?", false, "syntax_present_questions"),
+            ConvOption("Far is it here from?", false, "syntax_word_order")), "Pregunta corta con «is»: el verbo va primero: «Is it far…?»"),
+        ConvTurn("Una vecina", "No, just five minutes on foot.", listOf(
+            ConvOption("Thank you! Have a nice day.", true, "conversation_turn"),
+            ConvOption("Thank you, day nice have.", false, "syntax_word_order"),
+            ConvOption("I very thank you much.", false, "syntax_word_order")), "Despedida completa: «Have a nice day».")
+    )),
+    Conversation("medico", "En el médico", "Postal · Salud", listOf(
+        ConvTurn("La recepcionista", "Good morning. How can I help you?", listOf(
+            ConvOption("Good morning. I have an appointment at ten.", true, "conversation_turn"),
+            ConvOption("I appointment have at ten.", false, "syntax_word_order"),
+            ConvOption("Morning. Appointment I ten have.", false, "syntax_word_order")), "Frase completa y tranquila: sujeto + verbo + el dato: «I have an appointment at ten»."),
+        ConvTurn("El médico", "What happened? When did it start?", listOf(
+            ConvOption("I fell down yesterday and my arm hurts.", true, "syntax_past_tense"),
+            ConvOption("I fall yesterday and arm hurt.", false, "syntax_past_tense"),
+            ConvOption("Yesterday I fall and my arm is hurt.", false, "syntax_past_tense")), "Con «yesterday», el verbo va en pasado: «fell», «hurt»."),
+        ConvTurn("El médico", "Take this twice a day, and rest.", listOf(
+            ConvOption("Thank you, doctor. How many days?", true, "syntax_present_questions"),
+            ConvOption("How many days I take?", false, "syntax_present_questions"),
+            ConvOption("Days how many, doctor?", false, "syntax_word_order")), "Pregunta completa: «How many days?» abre y ordena todo.")
+    )),
+    Conversation("aeropuerto", "En el aeropuerto", "Postal · Viaje", listOf(
+        ConvTurn("El agente", "Good afternoon. Where are you traveling to?", listOf(
+            ConvOption("To Tampa, please. Here is my passport.", true, "conversation_turn"),
+            ConvOption("Tampa. Passport here is my.", false, "syntax_word_order"),
+            ConvOption("I traveling Tampa to.", false, "syntax_word_order")), "Respuesta completa con cortesía: destino + «please» + el documento."),
+        ConvTurn("El agente", "Do you have any bags to check?", listOf(
+            ConvOption("Yes, I do. Just this one suitcase.", true, "syntax_present_questions"),
+            ConvOption("Yes, I have one suitcase just.", false, "syntax_word_order"),
+            ConvOption("Yes I do bags one check.", false, "syntax_word_order")), "A «Do you…?» se responde con el auxiliar: «Yes, I do»."),
+        ConvTurn("El agente", "Your gate is B7. Boarding starts at six.", listOf(
+            ConvOption("Thank you very much. Have a good day!", true, "conversation_turn"),
+            ConvOption("Thanks you very many.", false, "syntax_word_order"),
+            ConvOption("Good day have you too.", false, "syntax_word_order")), "Cierre completo: «Thank you very much» — el orden no se negocia.")
+    )),
+    Conversation("restaurante", "En el restaurante", "Postal · Nivel 1", listOf(
+        ConvTurn("El mesero", "Good evening. Are you ready to order?", listOf(
+            ConvOption("Yes, please. I would like the grilled chicken.", true, "syntax_word_order"),
+            ConvOption("I would like chicken the grilled.", false, "syntax_word_order"),
+            ConvOption("Chicken grilled I like would.", false, "syntax_word_order")), "«I would like» + el plato: el adjetivo antes del sustantivo, «grilled chicken»."),
+        ConvTurn("El mesero", "And to drink?", listOf(
+            ConvOption("A glass of water, please.", true, "conversation_turn"),
+            ConvOption("Water glass, please a.", false, "syntax_word_order"),
+            ConvOption("Please water of glass.", false, "syntax_word_order")), "«A glass of water»: artículo + cosa + «of» + contenido."),
+        ConvTurn("El mesero", "Would you like anything else?", listOf(
+            ConvOption("That is all, thank you. The check, please.", true, "conversation_turn"),
+            ConvOption("That all is. Check the please.", false, "syntax_word_order"),
+            ConvOption("Nothing more, checks please.", false, "syntax_word_order")), "«That is all» cierra con elegancia; «the check» pide la cuenta.")
     ))
 )
 
