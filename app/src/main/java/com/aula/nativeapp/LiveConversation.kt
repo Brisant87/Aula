@@ -636,6 +636,12 @@ object LiveConversationBanks {
         "cafe" -> cafe
         "ayer" -> ayer
         "hotel" -> hotel
+        "mercado" -> mercado
+        "trabajo" -> trabajo
+        "direcciones" -> direcciones
+        "medico" -> medico
+        "aeropuerto" -> aeropuerto
+        "restaurante" -> restaurante
         else -> null
     }
 
@@ -1112,4 +1118,924 @@ object LiveConversationBanks {
         ),
         wrapUpLine = "Everything is ready. Welcome to our hotel — enjoy your stay!"
     )
+
+    // ---------------------------------------------------------- mercado
+
+    private val mercado = LiveBank(
+        conversationId = "mercado",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Hello! Can I help you?",
+            objectiveEs = "Di qué buscas: pan fresco.",
+            modelReplies = listOf(
+                "Yes, I am looking for fresh bread.",
+                "Yes, please. Do you have fresh bread?"
+            ),
+            targetKeywords = listOf("looking", "fresh", "bread", "please"),
+            clarityTipEs = "«I am looking for…» es la fórmula para buscar algo en una tienda."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_fruit",
+                    partnerLine = "The fruit is fresh today. We have apples and oranges.",
+                    objectiveEs = "Pide fruta: manzanas o naranjas.",
+                    modelReplies = listOf(
+                        "I would like six apples, please.",
+                        "A kilo of oranges, please."
+                    ),
+                    targetKeywords = listOf("apples", "oranges", "kilo", "please"),
+                    clarityTipEs = "Las cantidades van antes de la fruta: «six apples», «a kilo of oranges»."
+                ),
+                triggerKeywords = listOf("fruit", "apple", "orange", "banana")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_howmany",
+                    partnerLine = "How many would you like?",
+                    objectiveEs = "Di la cantidad: dos o tres panes.",
+                    modelReplies = listOf(
+                        "Two, please.",
+                        "Three loaves, please."
+                    ),
+                    targetKeywords = listOf("two", "three", "loaves", "please"),
+                    clarityTipEs = "Respuesta corta y completa: el número y «please»."
+                ),
+                triggerKeywords = listOf("many", "two", "three", "number", "quantity")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_vegetables",
+                    partnerLine = "We also have fresh vegetables: tomatoes and peppers.",
+                    objectiveEs = "Pide verduras: tomates o pimientos.",
+                    modelReplies = listOf(
+                        "I would like some tomatoes, please.",
+                        "Half a kilo of peppers, please."
+                    ),
+                    targetKeywords = listOf("tomatoes", "peppers", "kilo", "please"),
+                    clarityTipEs = "«Some» es tu comodín de cantidad: «some tomatoes»."
+                ),
+                triggerKeywords = listOf("vegetable", "tomato", "pepper", "salad")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_price",
+                    partnerLine = "That is four euros in total.",
+                    objectiveEs = "Paga: entrega el dinero o pide pagar con tarjeta.",
+                    modelReplies = listOf(
+                        "Here you are. Thank you.",
+                        "By card, please."
+                    ),
+                    targetKeywords = listOf("card", "please", "thank"),
+                    clarityTipEs = "«Here you are» es lo que se dice al entregar algo."
+                ),
+                triggerKeywords = listOf("much", "cost", "price", "pay", "total", "euros")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_bag",
+                    partnerLine = "Would you like a bag for your bread?",
+                    objectiveEs = "Acepta la bolsa, o di que traes la tuya.",
+                    modelReplies = listOf(
+                        "Yes, please. One bag.",
+                        "No, thank you. I have my bag."
+                    ),
+                    targetKeywords = listOf("bag", "please", "thank"),
+                    clarityTipEs = "«I have my bag»: lo que traes contigo se dice con «I have»."
+                ),
+                triggerKeywords = listOf("bag")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_eggs",
+                    partnerLine = "The eggs are fresh this morning, from the farm.",
+                    objectiveEs = "Pide huevos: media docena o una docena.",
+                    modelReplies = listOf(
+                        "I would like six eggs, please.",
+                        "A dozen eggs, please."
+                    ),
+                    targetKeywords = listOf("eggs", "six", "dozen", "please"),
+                    clarityTipEs = "«A dozen» es una palabra-cantidad: doce de una vez."
+                ),
+                triggerKeywords = listOf("egg", "eggs", "dozen", "farm")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first time at this market?",
+                objectiveEs = "Responde: ¿es tu primera vez en este mercado?",
+                modelReplies = listOf(
+                    "Yes, it is my first time here.",
+                    "No, I come every Saturday."
+                ),
+                targetKeywords = listOf("first", "time", "come", "saturday"),
+                clarityTipEs = "«Saturday» arranca con /s/ directa, sin «e» antes.",
+                trapWords = listOf("saturday")
+            ),
+            LivePrompt(
+                id = "g_morning",
+                partnerLine = "It is a beautiful morning for the market, is it not?",
+                objectiveEs = "Comenta la mañana tan bonita para el mercado.",
+                modelReplies = listOf(
+                    "Yes, it is a beautiful day.",
+                    "Yes, perfect for fresh bread."
+                ),
+                targetKeywords = listOf("beautiful", "day", "fresh"),
+                clarityTipEs = "Pequeña charla, frase completa: «It is a beautiful day»."
+            ),
+            LivePrompt(
+                id = "g_local",
+                partnerLine = "Everything here is local, from small farms.",
+                objectiveEs = "Valora que todo sea local y de granjas pequeñas.",
+                modelReplies = listOf(
+                    "That is great. I love local food.",
+                    "Local food is the best."
+                ),
+                targetKeywords = listOf("local", "food", "love", "best"),
+                clarityTipEs = "«Local» se dice igual que se escribe: «lóu-cal»."
+            ),
+            LivePrompt(
+                id = "g_help",
+                partnerLine = "Take your time. I am here if you need anything.",
+                objectiveEs = "Agradece su paciencia y su ayuda.",
+                modelReplies = listOf(
+                    "Thank you very much.",
+                    "Thank you. You are very kind."
+                ),
+                targetKeywords = listOf("thank", "very", "kind"),
+                clarityTipEs = "«You are very kind» cierra cualquier compra con clase."
+            )
+        ),
+        wrapUpLine = "Thank you for visiting my stall. Come back any day!"
+    )
+
+    // ---------------------------------------------------------- trabajo
+
+    private val trabajo = LiveBank(
+        conversationId = "trabajo",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Welcome to the team! Do you speak English?",
+            objectiveEs = "Responde con honestidad: hablas un poco de inglés.",
+            modelReplies = listOf(
+                "Yes, I speak a little English.",
+                "Yes, a little. I am learning."
+            ),
+            targetKeywords = listOf("speak", "little", "english", "learning"),
+            clarityTipEs = "«Speak» arranca con /sp/ directa: nada de «espeak».",
+            trapNotesEs = listOf("La 'e' fantasma antes de la /s/ inicial es la trampa clásica: «speak», no «espeak»."),
+            trapWords = listOf("speak")
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_hours",
+                    partnerLine = "The office opens at nine and closes at five.",
+                    objectiveEs = "Confirma tu horario o pregunta a qué hora terminan.",
+                    modelReplies = listOf(
+                        "I start at nine every day.",
+                        "What time do we finish?"
+                    ),
+                    targetKeywords = listOf("start", "nine", "finish", "time"),
+                    clarityTipEs = "«Start» también arranca directa: «start», sin «e» antes.",
+                    trapWords = listOf("start")
+                ),
+                triggerKeywords = listOf("time", "hours", "start", "finish", "schedule", "nine")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_lunch",
+                    partnerLine = "We have lunch at one, in the small kitchen.",
+                    objectiveEs = "Pregunta dónde está la cocina o confirma la hora de comer.",
+                    modelReplies = listOf(
+                        "Perfect. Where is the kitchen?",
+                        "Thank you. I bring my lunch."
+                    ),
+                    targetKeywords = listOf("lunch", "kitchen", "bring", "where"),
+                    clarityTipEs = "«Where is the kitchen?» — la pregunta lleva el verbo antes del lugar."
+                ),
+                triggerKeywords = listOf("lunch", "eat", "break", "kitchen")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_computer",
+                    partnerLine = "Your computer is on that desk. The password is on the note.",
+                    objectiveEs = "Pregunta dónde entrar o agradece la información.",
+                    modelReplies = listOf(
+                        "Thank you. I see the computer.",
+                        "On that desk. Thank you very much."
+                    ),
+                    targetKeywords = listOf("computer", "desk", "thank"),
+                    clarityTipEs = "«Computer» lleva la fuerza en el medio: «com-piú-ter»."
+                ),
+                triggerKeywords = listOf("computer", "desk", "password", "login")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_meeting",
+                    partnerLine = "We have a team meeting on Mondays at ten.",
+                    objectiveEs = "Confirma que estarás en la reunión de los lunes.",
+                    modelReplies = listOf(
+                        "Great. I will be at the meeting.",
+                        "On Mondays at ten. I understand."
+                    ),
+                    targetKeywords = listOf("meeting", "mondays", "ten", "understand"),
+                    clarityTipEs = "Los días de la semana llevan «on»: «on Mondays»."
+                ),
+                triggerKeywords = listOf("meeting", "monday", "team")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_questions",
+                    partnerLine = "If you have questions, ask Maria. She is very kind.",
+                    objectiveEs = "Di que preguntarás a María, o dónde encontrarla.",
+                    modelReplies = listOf(
+                        "I will ask Maria. Thank you.",
+                        "Where can I find Maria?"
+                    ),
+                    targetKeywords = listOf("ask", "maria", "find", "thank"),
+                    clarityTipEs = "«I will ask Maria»: el futuro simple es «will» + verbo."
+                ),
+                triggerKeywords = listOf("question", "help", "ask", "maria")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_tasks",
+                    partnerLine = "Today you start with the emails, then the calls.",
+                    objectiveEs = "Confirma el orden de tus tareas de hoy.",
+                    modelReplies = listOf(
+                        "I understand. Emails first, then calls.",
+                        "Can you show me the emails?"
+                    ),
+                    targetKeywords = listOf("emails", "calls", "first", "show"),
+                    clarityTipEs = "«First… then…» ordena cualquier lista de tareas."
+                ),
+                triggerKeywords = listOf("task", "work", "do", "emails", "calls")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_from",
+                partnerLine = "Where are you from?",
+                objectiveEs = "Di de dónde eres y dónde vives ahora.",
+                modelReplies = listOf(
+                    "I am from Mexico.",
+                    "I am from Spain, but I live here now."
+                ),
+                targetKeywords = listOf("from", "live", "here"),
+                clarityTipEs = "«I am from…» para el origen; «I live…» para donde vives hoy."
+            ),
+            LivePrompt(
+                id = "g_experience",
+                partnerLine = "Is this your first job in an office?",
+                objectiveEs = "Responde: ¿es tu primer trabajo de oficina?",
+                modelReplies = listOf(
+                    "No, I worked in an office before.",
+                    "Yes, it is my first office job."
+                ),
+                targetKeywords = listOf("first", "job", "office", "worked"),
+                clarityTipEs = "«Worked» es el pasado de «work»: una sílaba seca al final."
+            ),
+            LivePrompt(
+                id = "g_team",
+                partnerLine = "The team is small and friendly.",
+                objectiveEs = "Di que estás contento de estar aquí.",
+                modelReplies = listOf(
+                    "I am happy to be here.",
+                    "Everyone is very kind."
+                ),
+                targetKeywords = listOf("happy", "here", "kind"),
+                clarityTipEs = "«I am happy to be here» es la frase de primer día perfecta."
+            ),
+            LivePrompt(
+                id = "g_tomorrow",
+                partnerLine = "Tomorrow we start at the same time.",
+                objectiveEs = "Confirma la hora de mañana.",
+                modelReplies = listOf(
+                    "Perfect. See you tomorrow.",
+                    "At nine tomorrow. I understand."
+                ),
+                targetKeywords = listOf("tomorrow", "nine", "understand"),
+                clarityTipEs = "«See you tomorrow» cierra el día sin esfuerzo."
+            )
+        ),
+        wrapUpLine = "That is all for today. Welcome to the team — see you tomorrow!"
+    )
+
+    // ---------------------------------------------------------- direcciones
+
+    private val direcciones = LiveBank(
+        conversationId = "direcciones",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Hello! Can I help you?",
+            objectiveEs = "Pide ayuda: preguntas dónde está el museo.",
+            modelReplies = listOf(
+                "Yes, please. Where is the museum?",
+                "Excuse me. Where is the museum?"
+            ),
+            targetKeywords = listOf("where", "museum", "please", "excuse"),
+            clarityTipEs = "«Excuse me» es la llave cortés para pedir ayuda en la calle."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_library",
+                    partnerLine = "The museum is next to the library, on Green Street.",
+                    objectiveEs = "Confirma el sitio: junto a la biblioteca, en Green Street.",
+                    modelReplies = listOf(
+                        "Next to the library. Thank you.",
+                        "On Green Street, next to the library."
+                    ),
+                    targetKeywords = listOf("next", "library", "street", "thank"),
+                    clarityTipEs = "«Street» arranca con /str/ directa: «strit», sin «e» antes.",
+                    trapWords = listOf("street")
+                ),
+                triggerKeywords = listOf("library", "museum", "street", "next")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_far",
+                    partnerLine = "It is not far. Ten minutes on foot, or one stop by bus.",
+                    objectiveEs = "Decide: vas andando o en autobús.",
+                    modelReplies = listOf(
+                        "I will walk, thank you.",
+                        "One stop by bus. Thank you."
+                    ),
+                    targetKeywords = listOf("walk", "bus", "thank", "stop"),
+                    clarityTipEs = "«Stop» directa: la parada es «stop», no «estop».",
+                    trapWords = listOf("stop")
+                ),
+                triggerKeywords = listOf("far", "walk", "bus", "long")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_turn",
+                    partnerLine = "Go straight and turn left at the bank.",
+                    objectiveEs = "Repite la ruta para confirmarla: recto y a la izquierda en el banco.",
+                    modelReplies = listOf(
+                        "Straight, then left at the bank.",
+                        "Turn left at the bank. I understand."
+                    ),
+                    targetKeywords = listOf("straight", "left", "bank", "turn"),
+                    clarityTipEs = "«Straight» entra directa, sin «e»: no es «estraight».",
+                    trapNotesEs = listOf("La 'e' fantasma antes de la /s/ inicial: «straight», no «estraight»."),
+                    trapWords = listOf("straight")
+                ),
+                triggerKeywords = listOf("turn", "left", "right", "straight", "corner")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_station",
+                    partnerLine = "The station is behind the park, near the river.",
+                    objectiveEs = "Confirma dónde está la estación.",
+                    modelReplies = listOf(
+                        "Behind the park. Thank you very much.",
+                        "Is the station near here?"
+                    ),
+                    targetKeywords = listOf("station", "behind", "park", "near"),
+                    clarityTipEs = "«Station» directa: «stéi-shon», sin «e» antes.",
+                    trapWords = listOf("station")
+                ),
+                triggerKeywords = listOf("station", "train", "park")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_open",
+                    partnerLine = "The museum opens at ten and closes at six.",
+                    objectiveEs = "Confirma el horario del museo.",
+                    modelReplies = listOf(
+                        "It opens at ten and closes at six.",
+                        "Thank you. I will go now."
+                    ),
+                    targetKeywords = listOf("opens", "ten", "closes", "six"),
+                    clarityTipEs = "Los horarios llevan tercera persona: «it opens», «it closes»."
+                ),
+                triggerKeywords = listOf("open", "close", "time", "hours")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_map",
+                    partnerLine = "I can show you on my phone. Look, it is this street.",
+                    objectiveEs = "Confirma que ya ves la calle en el mapa.",
+                    modelReplies = listOf(
+                        "I see it now. Thank you!",
+                        "This street, two blocks away."
+                    ),
+                    targetKeywords = listOf("see", "street", "blocks", "thank"),
+                    clarityTipEs = "«I see it now» = ya lo veo: la frase cuando el mapa por fin habla.",
+                    trapWords = listOf("street")
+                ),
+                triggerKeywords = listOf("map", "phone", "show", "lost")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_visit",
+                partnerLine = "Are you visiting our city?",
+                objectiveEs = "Responde: estás de visita unos días.",
+                modelReplies = listOf(
+                    "Yes, I am here for two days.",
+                    "Yes, it is my first visit."
+                ),
+                targetKeywords = listOf("visiting", "days", "first", "visit"),
+                clarityTipEs = "«My first visit» deja claro que es tu primera vez aquí."
+            ),
+            LivePrompt(
+                id = "g_cafe",
+                partnerLine = "There is a nice café on that corner, if you are thirsty.",
+                objectiveEs = "Agradece el consejo del café de la esquina.",
+                modelReplies = listOf(
+                    "Thank you. A coffee sounds good.",
+                    "Maybe later. Thank you!"
+                ),
+                targetKeywords = listOf("coffee", "sounds", "thank", "later"),
+                clarityTipEs = "«Sounds good» = suena bien: para ideas y planes.",
+                trapWords = listOf("sounds")
+            ),
+            LivePrompt(
+                id = "g_weather",
+                partnerLine = "It is a good day for a walk in the city.",
+                objectiveEs = "Comenta el buen día para pasear.",
+                modelReplies = listOf(
+                    "Yes, the weather is beautiful.",
+                    "I love walking in this city."
+                ),
+                targetKeywords = listOf("weather", "beautiful", "walking", "love"),
+                clarityTipEs = "El tiempo atmosférico es «weather»; la hora es «time». No se mezclan."
+            ),
+            LivePrompt(
+                id = "g_kind",
+                partnerLine = "Do not worry, the city is small and friendly.",
+                objectiveEs = "Agradece su ayuda y su amabilidad.",
+                modelReplies = listOf(
+                    "Thank you for your help.",
+                    "You are very kind. Thank you!"
+                ),
+                targetKeywords = listOf("thank", "help", "kind"),
+                clarityTipEs = "«Thank you for your help»: el «for» presenta el motivo."
+            )
+        ),
+        wrapUpLine = "You are welcome! Enjoy the museum and our city."
+    )
+
+    // ---------------------------------------------------------- médico
+
+    private val medico = LiveBank(
+        conversationId = "medico",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good morning. How can I help you?",
+            objectiveEs = "Di que tienes una cita a las diez.",
+            modelReplies = listOf(
+                "Good morning. I have an appointment at ten.",
+                "I have an appointment with the doctor."
+            ),
+            targetKeywords = listOf("appointment", "ten", "doctor", "morning"),
+            clarityTipEs = "«Appointment» es la cita: «I have an appointment»."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_pain",
+                    partnerLine = "Where does it hurt?",
+                    objectiveEs = "Di dónde te duele: el brazo o la espalda.",
+                    modelReplies = listOf(
+                        "My arm hurts, here.",
+                        "It hurts in my back."
+                    ),
+                    targetKeywords = listOf("hurts", "arm", "back", "here"),
+                    clarityTipEs = "El dolor lleva «hurts» con s: «my arm hurts»."
+                ),
+                triggerKeywords = listOf("pain", "hurt", "hurts", "arm", "leg", "back", "head")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_when",
+                    partnerLine = "When did it start?",
+                    objectiveEs = "Di cuándo empezó: ayer, tras la caída.",
+                    modelReplies = listOf(
+                        "It started yesterday, after the fall.",
+                        "Two days ago, in the morning."
+                    ),
+                    targetKeywords = listOf("started", "yesterday", "days", "morning"),
+                    clarityTipEs = "«Started» entra directa: «stár-ted», sin «e» antes.",
+                    trapWords = listOf("started")
+                ),
+                triggerKeywords = listOf("when", "start", "yesterday", "ago")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_fever",
+                    partnerLine = "Do you have a fever or a cough?",
+                    objectiveEs = "Di qué tienes: un poco de fiebre o solo tos.",
+                    modelReplies = listOf(
+                        "A little fever, and my throat hurts.",
+                        "No fever, only a cough."
+                    ),
+                    targetKeywords = listOf("fever", "cough", "throat", "hurts"),
+                    clarityTipEs = "«Throat» lleva la «th»: lengua entre los dientes y aire."
+                ),
+                triggerKeywords = listOf("fever", "cough", "cold", "throat")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_medicine",
+                    partnerLine = "Take this medicine twice a day, with food.",
+                    objectiveEs = "Confirma la dosis o pregunta cuántos días.",
+                    modelReplies = listOf(
+                        "Twice a day, with food. I understand.",
+                        "How many days, doctor?"
+                    ),
+                    targetKeywords = listOf("twice", "day", "food", "understand"),
+                    clarityTipEs = "«Twice a day» = dos veces al día; «once» es una vez."
+                ),
+                triggerKeywords = listOf("medicine", "take", "pills", "days")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_rest",
+                    partnerLine = "You need rest and water for three days.",
+                    objectiveEs = "Confirma el reposo o pregunta si puedes trabajar mañana.",
+                    modelReplies = listOf(
+                        "Three days of rest. I understand.",
+                        "Can I work tomorrow?"
+                    ),
+                    targetKeywords = listOf("rest", "days", "work", "tomorrow"),
+                    clarityTipEs = "«Rest» es el reposo; el verbo es «to rest»."
+                ),
+                triggerKeywords = listOf("rest", "work", "sleep")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_insurance",
+                    partnerLine = "Do you have your insurance card with you?",
+                    objectiveEs = "Di que traes tu tarjeta del seguro.",
+                    modelReplies = listOf(
+                        "Yes, here is my card.",
+                        "Yes, I have it in my bag."
+                    ),
+                    targetKeywords = listOf("insurance", "card", "here", "bag"),
+                    clarityTipEs = "«Here is my card» al entregarla: la misma fórmula de «here you are»."
+                ),
+                triggerKeywords = listOf("insurance", "card", "pay", "cost")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_name",
+                partnerLine = "Can I have your name and date of birth?",
+                objectiveEs = "Di tu nombre y cuándo naciste.",
+                modelReplies = listOf(
+                    "My name is Alex. I was born in May.",
+                    "Alex Garcia, born in nineteen ninety."
+                ),
+                targetKeywords = listOf("name", "born", "may"),
+                clarityTipEs = "Nacer es «was born»: «I was born in May»."
+            ),
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first visit to this clinic?",
+                objectiveEs = "Responde: ¿es tu primera visita a esta clínica?",
+                modelReplies = listOf(
+                    "Yes, it is my first time here.",
+                    "No, I came last year."
+                ),
+                targetKeywords = listOf("first", "time", "came", "year"),
+                clarityTipEs = "«Came» es el pasado de «come»: «I came last year»."
+            ),
+            LivePrompt(
+                id = "g_wait",
+                partnerLine = "The doctor is with a patient. Please take a seat.",
+                objectiveEs = "Acepta esperar sentado.",
+                modelReplies = listOf(
+                    "Thank you. I will wait here.",
+                    "I will take a seat. Thank you."
+                ),
+                targetKeywords = listOf("wait", "seat", "thank"),
+                clarityTipEs = "«Seat» entra directa: «sit», sin «e» antes.",
+                trapWords = listOf("seat")
+            ),
+            LivePrompt(
+                id = "g_water",
+                partnerLine = "Would you like a glass of water while you wait?",
+                objectiveEs = "Acepta o rechaza el vaso de agua, con cortesía.",
+                modelReplies = listOf(
+                    "Yes, please. Water is good.",
+                    "No, thank you very much."
+                ),
+                targetKeywords = listOf("water", "please", "thank"),
+                clarityTipEs = "El rechazo cortés también lleva «thank you»: nunca un «no» seco."
+            )
+        ),
+        wrapUpLine = "Take care, rest well, and come back if it hurts more. Get well soon!"
+    )
+
+    // ---------------------------------------------------------- aeropuerto
+
+    private val aeropuerto = LiveBank(
+        conversationId = "aeropuerto",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good afternoon. Where are you traveling to?",
+            objectiveEs = "Di tu destino y muestra el pasaporte.",
+            modelReplies = listOf(
+                "To Tampa, please. Here is my passport.",
+                "I am traveling to Tampa."
+            ),
+            targetKeywords = listOf("traveling", "tampa", "passport", "here"),
+            clarityTipEs = "Al dar un papel se dice «Here is…»: «Here is my passport»."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_bags",
+                    partnerLine = "Do you have any bags to check?",
+                    objectiveEs = "Di qué equipaje facturas: solo una maleta.",
+                    modelReplies = listOf(
+                        "Yes, just this one suitcase.",
+                        "No, only my backpack."
+                    ),
+                    targetKeywords = listOf("suitcase", "backpack", "one"),
+                    clarityTipEs = "«Suitcase» entra directa: «sút-keis», sin «e» antes.",
+                    trapWords = listOf("suitcase")
+                ),
+                triggerKeywords = listOf("bag", "bags", "suitcase", "check", "luggage")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_seat",
+                    partnerLine = "Window or aisle seat?",
+                    objectiveEs = "Elige asiento: ventana o pasillo.",
+                    modelReplies = listOf(
+                        "A window seat, please.",
+                        "The aisle, please. Thank you."
+                    ),
+                    targetKeywords = listOf("window", "aisle", "seat", "please"),
+                    clarityTipEs = "«Aisle» se dice «áil»: la a inicial suena sola.",
+                    trapWords = listOf("seat")
+                ),
+                triggerKeywords = listOf("seat", "window", "aisle", "sit")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_gate",
+                    partnerLine = "Your gate is B7, on the left.",
+                    objectiveEs = "Confirma tu puerta: la B7, a la izquierda.",
+                    modelReplies = listOf(
+                        "Gate B7, on the left. Thank you.",
+                        "Where is gate B7?"
+                    ),
+                    targetKeywords = listOf("gate", "left", "thank", "where"),
+                    clarityTipEs = "Repetir el dato («Gate B7») es la forma natural de confirmarlo."
+                ),
+                triggerKeywords = listOf("gate", "where", "boarding")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_time",
+                    partnerLine = "Boarding starts at six. You have two hours.",
+                    objectiveEs = "Valora tu tiempo: da para un café.",
+                    modelReplies = listOf(
+                        "Boarding starts at six. I have time.",
+                        "Two hours, time for a coffee."
+                    ),
+                    targetKeywords = listOf("starts", "hours", "time", "coffee"),
+                    clarityTipEs = "«Starts» entra directa: «starts», sin «e» antes.",
+                    trapWords = listOf("starts")
+                ),
+                triggerKeywords = listOf("time", "boarding", "starts", "late", "hour")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_id",
+                    partnerLine = "Can I see your passport and ticket, please?",
+                    objectiveEs = "Entrega pasaporte y billete.",
+                    modelReplies = listOf(
+                        "Of course. Here they are.",
+                        "Here is my passport and my ticket."
+                    ),
+                    targetKeywords = listOf("passport", "ticket", "here", "course"),
+                    clarityTipEs = "Para dos cosas a la vez: «Here they are»."
+                ),
+                triggerKeywords = listOf("passport", "ticket", "id")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_flight",
+                    partnerLine = "Your flight is on time today.",
+                    objectiveEs = "Celebra que el vuelo va puntual.",
+                    modelReplies = listOf(
+                        "That is great news. My flight is on time.",
+                        "On time. Perfect."
+                    ),
+                    targetKeywords = listOf("flight", "time", "news", "perfect"),
+                    clarityTipEs = "«On time» es puntual; «in time» es llegar con margen. Este es «on time»."
+                ),
+                triggerKeywords = listOf("flight", "delay", "delayed", "time")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first flight?",
+                objectiveEs = "Responde: ¿es tu primer vuelo?",
+                modelReplies = listOf(
+                    "No, I fly every year.",
+                    "Yes, it is my first flight."
+                ),
+                targetKeywords = listOf("first", "flight", "fly", "year"),
+                clarityTipEs = "El avión es «flight»; el verbo, «fly»."
+            ),
+            LivePrompt(
+                id = "g_visit",
+                partnerLine = "Are you traveling for work or for vacation?",
+                objectiveEs = "Di el motivo de tu viaje.",
+                modelReplies = listOf(
+                    "For vacation, with my family.",
+                    "For work. I return on Friday."
+                ),
+                targetKeywords = listOf("vacation", "family", "work", "friday"),
+                clarityTipEs = "El motivo lleva «for»: «for work», «for vacation»."
+            ),
+            LivePrompt(
+                id = "g_food",
+                partnerLine = "There are cafés after security, if you are hungry.",
+                objectiveEs = "Agradece el dato de los cafés tras el control.",
+                modelReplies = listOf(
+                    "Thank you. I will have a coffee.",
+                    "Good to know. Thank you!"
+                ),
+                targetKeywords = listOf("coffee", "thank", "know"),
+                clarityTipEs = "«Good to know» = bueno saberlo: frase de viajero experto."
+            ),
+            LivePrompt(
+                id = "g_help",
+                partnerLine = "If you need help, our desk is near gate B.",
+                objectiveEs = "Agradece saber dónde pedir ayuda.",
+                modelReplies = listOf(
+                    "Thank you for your help.",
+                    "That is very kind. Thank you."
+                ),
+                targetKeywords = listOf("help", "thank", "kind"),
+                clarityTipEs = "«If you need help…» es la frase que escucharás en cada aeropuerto."
+            )
+        ),
+        wrapUpLine = "Everything is ready. Have a safe flight and a great trip!"
+    )
+
+    // ---------------------------------------------------------- restaurante
+
+    private val restaurante = LiveBank(
+        conversationId = "restaurante",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good evening. Are you ready to order?",
+            objectiveEs = "Pide el pollo a la parrilla con la forma cortés.",
+            modelReplies = listOf(
+                "Yes, please. I would like the grilled chicken.",
+                "I would like the grilled chicken, please."
+            ),
+            targetKeywords = listOf("would", "like", "grilled", "chicken"),
+            clarityTipEs = "«I would like» otra vez: la fórmula cortés también pide la cena."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_drink",
+                    partnerLine = "And to drink?",
+                    objectiveEs = "Pide tu bebida: un vaso de agua o vino.",
+                    modelReplies = listOf(
+                        "A glass of water, please.",
+                        "Red wine for me, please."
+                    ),
+                    targetKeywords = listOf("glass", "water", "wine", "please"),
+                    clarityTipEs = "«A glass of water»: el vaso se pide entero, con su «of»."
+                ),
+                triggerKeywords = listOf("drink", "water", "wine", "thirsty")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_starter",
+                    partnerLine = "Would you like a starter? The soup is fresh today.",
+                    objectiveEs = "Pide un entrante, o di que no, gracias.",
+                    modelReplies = listOf(
+                        "The soup, please.",
+                        "No starter, thank you."
+                    ),
+                    targetKeywords = listOf("soup", "starter", "please", "thank"),
+                    clarityTipEs = "«Starter» y «soup» entran directas: sin «e» antes de la /s/.",
+                    trapNotesEs = listOf("La 'e' fantasma antes de la /s/ inicial: «starter», no «estarter»."),
+                    trapWords = listOf("soup", "starter")
+                ),
+                triggerKeywords = listOf("starter", "soup", "salad", "begin")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_side",
+                    partnerLine = "The chicken comes with rice or potatoes.",
+                    objectiveEs = "Elige el acompañamiento: arroz o patatas.",
+                    modelReplies = listOf(
+                        "With rice, please.",
+                        "Potatoes for me, thank you."
+                    ),
+                    targetKeywords = listOf("rice", "potatoes", "please"),
+                    clarityTipEs = "«With rice» — el acompañamiento va con «with»."
+                ),
+                triggerKeywords = listOf("rice", "potatoes", "side", "with")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_dessert",
+                    partnerLine = "Would you like dessert? We have ice cream and fruit.",
+                    objectiveEs = "Pide el postre: helado o fruta.",
+                    modelReplies = listOf(
+                        "Yes, ice cream for dessert, please.",
+                        "Just fruit, thank you."
+                    ),
+                    targetKeywords = listOf("dessert", "ice", "cream", "fruit"),
+                    clarityTipEs = "«Ice cream» son dos palabras que suenan a una: «áis-crim»."
+                ),
+                triggerKeywords = listOf("dessert", "sweet", "ice", "cake")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_check",
+                    partnerLine = "Can I bring you anything else?",
+                    objectiveEs = "Pide la cuenta para cerrar la cena.",
+                    modelReplies = listOf(
+                        "The check, please.",
+                        "That is all, thank you."
+                    ),
+                    targetKeywords = listOf("check", "all", "thank"),
+                    clarityTipEs = "La cuenta en EE. UU. es «the check»; en Reino Unido, «the bill»."
+                ),
+                triggerKeywords = listOf("check", "bill", "pay", "else")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_taste",
+                    partnerLine = "How is everything? Is the chicken good?",
+                    objectiveEs = "Di qué tal está la comida.",
+                    modelReplies = listOf(
+                        "Everything is delicious, thank you.",
+                        "The chicken is perfect."
+                    ),
+                    targetKeywords = listOf("delicious", "perfect", "chicken", "thank"),
+                    clarityTipEs = "«Delicious» es el cumplido fuerte: úsalo cuando de verdad lo sea."
+                ),
+                triggerKeywords = listOf("good", "taste", "delicious", "like")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first time in our restaurant?",
+                objectiveEs = "Responde: ¿es tu primera vez en este restaurante?",
+                modelReplies = listOf(
+                    "Yes, it is my first time here.",
+                    "No, I come here with my family."
+                ),
+                targetKeywords = listOf("first", "time", "family", "come"),
+                clarityTipEs = "La misma respuesta sirve en casi cualquier sitio nuevo."
+            ),
+            LivePrompt(
+                id = "g_table",
+                partnerLine = "Your table is by the window, with a nice view.",
+                objectiveEs = "Valora la mesa junto a la ventana.",
+                modelReplies = listOf(
+                    "What a beautiful view. Thank you.",
+                    "The window table is perfect."
+                ),
+                targetKeywords = listOf("window", "view", "beautiful", "perfect"),
+                clarityTipEs = "«What a beautiful view!» — el «what a…» hace el cumplido."
+            ),
+            LivePrompt(
+                id = "g_wait",
+                partnerLine = "Your food will be ready in fifteen minutes.",
+                objectiveEs = "Acepta la espera sin problema.",
+                modelReplies = listOf(
+                    "No problem. Fifteen minutes is fine.",
+                    "Perfect, we will wait until it is ready."
+                ),
+                targetKeywords = listOf("ready", "minutes", "wait", "fine"),
+                clarityTipEs = "«We will wait»: esperar a alguien o algo es «wait», sin «for» aquí."
+            ),
+            LivePrompt(
+                id = "g_special",
+                partnerLine = "The fish is the special of the house today.",
+                objectiveEs = "Muestra interés por el pescado, la especialidad de la casa.",
+                modelReplies = listOf(
+                    "Then I will try the fish.",
+                    "The special sounds good. Thank you."
+                ),
+                targetKeywords = listOf("fish", "special", "try", "sounds"),
+                clarityTipEs = "«Special» entra directa: «spé-shal», sin «e» antes.",
+                trapWords = listOf("special", "sounds")
+            )
+        ),
+        wrapUpLine = "Thank you for dining with us. Have a wonderful evening!"
+    )
+
 }
