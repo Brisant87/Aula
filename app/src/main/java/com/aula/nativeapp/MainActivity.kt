@@ -1,10 +1,25 @@
 package com.aula.nativeapp
 
+import android.Manifest
+import android.app.Activity
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaPlayer
+import android.media.MediaRecorder
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.speech.tts.UtteranceProgressListener
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import java.io.File
 import java.util.Calendar
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.Crossfade
@@ -20,6 +35,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,6 +75,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -705,8 +722,8 @@ fun MouthCanvas(shape: MouthShape, modifier: Modifier = Modifier) {
 }
 
 /**
- * La Guía · Mira · Escucha · Copia — without the Copia recorder in this first
- * native scaffold: the mouth steps through the sounds WHILE the voice says the
+ * La Guía · Mira · Escucha · Copia — the mouth steps through the sounds WHILE
+ * the voice says the
  * word (one combined "Escuchar y ver" button), and the learner self-rates.
  * Ratings log pronunciation:<word> events; "Casi" logs nothing, like the web app.
  */
@@ -756,8 +773,227 @@ fun GuideCard(
     var playJob by remember(wordKey) { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
 
+    val ctx = LocalContext.current
+    // ---- Copia: grabación propia + revisión automática (revisor) ----
+    val probe = remember(wordKey) { LiveSpeechProbe(ctx) }
+    val srListening by probe.isListening.collectAsState()
+    val srHeard by probe.lastRecognition.collectAsState()
+    val srError by probe.micError.collectAsState()
+    var checkArmed by remember(wordKey) { mutableStateOf(false) }
+    var autoNote by remember(wordKey) { mutableStateOf<String?>(null) }
+    var autoKind by remember(wordKey) { mutableStateOf("info") }
+    var recorder by remember(wordKey) { mutableStateOf<MediaRecorder?>(null) }
+    var recording by remember(wordKey) { mutableStateOf(false) }
+    var recLevel by remember(wordKey) { mutableStateOf(0f) }
+    var recFile by remember(wordKey) { mutableStateOf<File?>(null) }
+    var recNote by remember(wordKey) { mutableStateOf<String?>(null) }
+    var recPlayer by remember(wordKey) { mutableStateOf<MediaPlayer?>(null) }
+    var pendingMicAction by remember(wordKey) { mutableStateOf<String?>(null) }
+    var micDenial by remember(wordKey) { mutableStateOf(false) }
+    var micDenialPermanent by remember(wordKey) { mutableStateOf(false) }
+
+    DisposableEffect(probe) {
+        onDispose { probe.destroy() }
+    }
+
+    fun stopRecording(failed: Boolean = false) {
+        try {
+            recorder?.stop()
+        } catch (e: Exception) {
+            // Too short or already stopped: no usable take.
+            if (!failed) {
+                recFile?.delete()
+                recFile = null
+                recNote = "La grabación salió demasiado corta. Toca grabar y di la palabra entera."
+            }
+        }
+        try {
+            recorder?.release()
+        } catch (e: Exception) {
+        }
+        recorder = null
+        recording = false
+        recLevel = 0f
+    }
+
+    fun startRecording() {
+        tts.stop()
+        val file = File(ctx.cacheDir, "copia_" + gw.word.lowercase() + ".m4a")
+        try {
+            val rec = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(ctx) else @Suppress("DEPRECATION") MediaRecorder()
+            rec.setAudioSource(MediaRecorder.AudioSource.MIC)
+            rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            rec.setOutputFile(file.absolutePath)
+            rec.prepare()
+            rec.start()
+            recorder = rec
+            recFile = file
+            recNote = null
+            recording = true
+        } catch (e: Exception) {
+            recNote = "No se pudo grabar en este dispositivo. Júzgate tú: eso sí cuenta."
+        }
+    }
+
+    // Medidor + parada automática: silencio de ~1,4 s tras oír voz, u 8 s.
+    LaunchedEffect(recording) {
+        if (recording) {
+            val t0 = System.currentTimeMillis()
+            var heard = false
+            var lastLoud = t0
+            while (recording) {
+                val amp = try {
+                    recorder?.maxAmplitude ?: 0
+                } catch (e: Exception) {
+                    0
+                }
+                recLevel = amp / 32767f
+                val now = System.currentTimeMillis()
+                if (amp > 3000) {
+                    heard = true
+                    lastLoud = now
+                }
+                if ((heard && now - lastLoud > 1400) || now - t0 > 8000) {
+                    stopRecording()
+                    if (recFile != null) {
+                        recNote = "Esa es tu voz. Compárala con el modelo y júzgate abajo — o deja que la app lo revise sola."
+                    }
+                    break
+                }
+                delay(100)
+            }
+        }
+    }
+
+    fun playRecording() {
+        val f = recFile ?: return
+        try {
+            recPlayer?.release()
+            val mp = MediaPlayer()
+            recPlayer = mp
+            mp.setDataSource(f.absolutePath)
+            mp.setOnCompletionListener {
+                try {
+                    it.release()
+                } catch (e: Exception) {
+                }
+                if (recPlayer === it) recPlayer = null
+            }
+            mp.prepare()
+            mp.start()
+        } catch (e: Exception) {
+            recNote = "No se pudo reproducir tu grabación en este dispositivo."
+        }
+    }
+
+    fun applyAutoVerdict(ok: Boolean, heardText: String) {
+        val wasFirst = !rated
+        autoKind = if (ok) "good" else "bad"
+        autoNote = (if (ok) {
+            "✓ La app escuchó «" + heardText + "»: eso era la palabra."
+        } else {
+            "La app escuchó «" + heardText.ifBlank { "…" } + "», no «" + gw.word + "». Mira la boca otra vez y reintenta cuando quieras."
+        }) + if (wasFirst) {
+            " Anotado en tu diario."
+        } else {
+            " Ya había una nota para esta palabra: esa es la que cuenta."
+        }
+        if (wasFirst) {
+            rated = true
+            store.logEvent("pronunciation:" + gw.word, context, ok)
+            if (isPhantomEFamilyWord(gw.word)) {
+                store.logEvent(PHANTOM_E_PATTERN_KEY, context, ok)
+            }
+            bump()
+            if (onRated != null) {
+                scope.launch {
+                    delay(1400)
+                    onRated()
+                }
+            }
+        }
+    }
+
+    fun startAutoCheck() {
+        tts.stop()
+        if (recording) stopRecording(failed = true)
+        probe.clearRecognition()
+        probe.clearMicError()
+        autoNote = null
+        checkArmed = true
+        probe.startListening("Di la palabra en inglés: " + gw.word)
+    }
+
+    // El veredicto llega por los flujos del probe: resultado = nota
+    // (solo la primera); error = no cuenta NADA, como en la web.
+    LaunchedEffect(srHeard) {
+        val heard = srHeard
+        if (heard != null && checkArmed) {
+            checkArmed = false
+            val target = gw.word.lowercase().trim()
+            val tokens = heard.lowercase().split(Regex("[^a-z']+")).filter { it.isNotBlank() }
+            applyAutoVerdict(tokens.contains(target), heard.trim())
+        }
+    }
+    LaunchedEffect(srError) {
+        val err = srError
+        if (err != null && checkArmed) {
+            checkArmed = false
+            autoKind = "info"
+            autoNote = err + " Nada de esto cuenta en tu Espejo: grábate y júzgate tú, o reintenta."
+        }
+    }
+
+    val micLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val action = pendingMicAction
+        pendingMicAction = null
+        if (granted) {
+            micDenial = false
+            micDenialPermanent = false
+            when (action) {
+                "rec" -> startRecording()
+                "check" -> startAutoCheck()
+            }
+        } else {
+            micDenial = true
+            val act = ctx.findActivityOrNull()
+            micDenialPermanent = act != null &&
+                !ActivityCompat.shouldShowRequestPermissionRationale(act, Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    fun withMic(action: String) {
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            micDenial = false
+            when (action) {
+                "rec" -> startRecording()
+                "check" -> startAutoCheck()
+            }
+        } else {
+            pendingMicAction = action
+            micLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+
     DisposableEffect(wordKey) {
-        onDispose { playJob?.cancel(); tts.syncListener = null }
+        onDispose {
+            playJob?.cancel()
+            tts.syncListener = null
+            try {
+                recorder?.release()
+            } catch (e: Exception) {
+            }
+            try {
+                recPlayer?.release()
+            } catch (e: Exception) {
+            }
+        }
     }
 
     fun stopPlay() {
@@ -917,7 +1153,86 @@ fun GuideCard(
         Spacer(Modifier.height(8.dp))
         PrimaryButton("🐢 Lento: voz y boca", olive = true, modifier = Modifier.fillMaxWidth()) { playWithVoice(true) }
         Spacer(Modifier.height(14.dp))
-        NoteText("Copia: escucha el modelo, repite en voz alta y júzgate tú. Sin notas inventadas: tu oído manda. (La grabación de voz llega en una próxima versión nativa.)")
+        NoteText("Copia: escucha el modelo, repite en voz alta y compárate. Grábate, deja que la app lo revise sola, o júzgate tú: sin notas inventadas, tu oído manda.")
+        Spacer(Modifier.height(10.dp))
+        if (recording) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .background(JournalLine, RoundedCornerShape(5.dp))
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(recLevel.coerceIn(0.02f, 1f))
+                        .fillMaxHeight()
+                        .background(Terracotta, RoundedCornerShape(5.dp))
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            NoteText("Grabando… di «" + gw.word + "». Se detiene solo cuando callas.")
+            Spacer(Modifier.height(8.dp))
+            GhostButton("■ Detener", modifier = Modifier.fillMaxWidth()) {
+                stopRecording()
+                if (recFile != null) {
+                    recNote = "Esa es tu voz. Compárala con el modelo y júzgate abajo — o deja que la app lo revise sola."
+                }
+            }
+        } else {
+            PrimaryButton("🎙 Grabar mi copia", modifier = Modifier.fillMaxWidth()) { withMic("rec") }
+        }
+        if (!recording && recFile != null) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GhostButton("▶ Mi copia", modifier = Modifier.weight(1f)) { playRecording() }
+                GhostButton("▶ El modelo", modifier = Modifier.weight(1f)) { tts.speak(gw.word, slow = false) }
+            }
+            recNote?.let {
+                Spacer(Modifier.height(6.dp))
+                NoteText(it)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        PrimaryButton(
+            if (srListening) "👂 Escuchando… toca para parar" else "🤖 Que la app lo revise sola",
+            olive = true,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (srListening) {
+                probe.stopListening()
+            } else {
+                withMic("check")
+            }
+        }
+        autoNote?.let {
+            Spacer(Modifier.height(10.dp))
+            FeedbackBox(it, good = autoKind == "good")
+        }
+        if (micDenial) {
+            Spacer(Modifier.height(10.dp))
+            FeedbackBox(
+                "Para grabarte o revisarte necesito el permiso del micrófono. Sin él, grábate en otra app o júzgate tú: nada de esto cuenta en tu Espejo.",
+                good = false
+            )
+            Spacer(Modifier.height(8.dp))
+            if (micDenialPermanent) {
+                GhostButton("Abrir los ajustes de la app", modifier = Modifier.fillMaxWidth()) {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", ctx.packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        ctx.startActivity(intent)
+                    } catch (e: Exception) {
+                    }
+                }
+            } else {
+                NoteText("Toca de nuevo «Grabar mi copia» o «Que la app lo revise sola» y acepta el permiso.")
+            }
+        }
         Spacer(Modifier.height(10.dp))
         Row(
             Modifier.fillMaxWidth(),
@@ -2382,9 +2697,9 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.5", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.6", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. La grabación de tu voz (Copia) llega en una próxima versión.")
+            NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
         }
     }
 
@@ -2409,4 +2724,14 @@ fun AjustesScreen(
             }
         )
     }
+}
+
+/** Context → Activity, walking wrappers (the live screen has its own). */
+private fun android.content.Context.findActivityOrNull(): Activity? {
+    var c: android.content.Context? = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
 }
