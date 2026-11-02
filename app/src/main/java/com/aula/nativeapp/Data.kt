@@ -5,7 +5,8 @@ package com.aula.nativeapp
  *
  * Ported from the web app (~/workspace/aula-apk/app-assets/index.html).
  * Content: all 17 syntax items, the transfer pool (incl. la familia de la
- * «e» fantasma), all 46 cognates, 21 guide words (the web app's 20 + sister),
+ * «e» fantasma), all 58 cognates (46 originals + 12 from the Puente harvest;
+ * Hotel and Taxi were already here), 21 guide words (the web app's 20 + sister),
  * all 9 conversations, all 6 listening items, 13 formulas, 6 cognate rules,
  * 7 day plans and the 4 Camino levels.
  */
@@ -130,7 +131,19 @@ val COGNATES: List<Cognate> = listOf(
     Cognate("Generous", "Generoso", "oso", "YÉ-ne-ros", "He is a generous friend.", "-oso se convierte en -ous."),
     Cognate("Precious", "Precioso", "oso", "PRÉ-shos", "Time is precious.", "-oso se convierte en -ous."),
     Cognate("Large", "Grande", "falsos", "LARCH", "It is a large house.", "¡Trampa! NO significa «largo»; eso es «long»."),
-    Cognate("Success", "Éxito", "falsos", "sok-SÉS", "The plan was a success.", "¡Trampa! Es «éxito», no «salida» (eso es «exit»).")
+    Cognate("Success", "Éxito", "falsos", "sok-SÉS", "The plan was a success.", "¡Trampa! Es «éxito», no «salida» (eso es «exit»)."),
+    Cognate("Banana", "Banana", "perfectos", "ba-NÁ-na", "I eat a banana every morning.", "Se escribe igual; la sílaba fuerte va en el medio."),
+    Cognate("Television", "Televisión", "perfectos", "TÉ-le-vi-zhon", "We watched the news on television.", "Casi idéntica; la «s» suena «zh» suave."),
+    Cognate("Project", "Proyecto", "perfectos", "PRÁ-yekt", "The project starts next week.", "La «y» se convierte en «j» y suena «y» fuerte."),
+    Cognate("Professional", "Profesional", "perfectos", "pro-FÉ-sho-nal", "He is a professional driver.", "Se escribe con «ss» y esa parte suena «sh»."),
+    Cognate("Museum", "Museo", "perfectos", "miu-SÍ-om", "The museum opens at nine.", "La «-o» final se convierte en «-um»."),
+    Cognate("Music", "Música", "perfectos", "MIÚ-sik", "I listen to music every day.", "Pierde el acento y la «a» final; la «u» suena «iu»."),
+    Cognate("Silence", "Silencio", "perfectos", "SÁI-lens", "There was silence in the room.", "El «-cio» final se reduce a «-ce»; la primera «i» suena «ai»."),
+    Cognate("Tomato", "Tomate", "perfectos", "to-MÉI-tou", "This tomato is very fresh.", "La «-e» final se convierte en «-o» y la «a» suena «ei»."),
+    Cognate("Restaurant", "Restaurante", "perfectos", "RÉS-to-rant", "The restaurant closes at ten.", "Pierde la «-e» final: tres sílabas, no cinco."),
+    Cognate("Tourist", "Turista", "perfectos", "TÚ-rist", "A tourist asked for directions.", "Pierde la «-a» final; el énfasis va al inicio."),
+    Cognate("Passport", "Pasaporte", "perfectos", "PÁS-port", "I need my passport to travel.", "Pierde la «-a» y dobla la «s»: dos sílabas."),
+    Cognate("Presentation", "Presentación", "cion", "pre-sen-TÉI-shon", "Her presentation was clear and short.", "-ción se convierte en -tion; suena «shon».")
 )
 
 val RULES: List<RuleInfo> = listOf(
