@@ -740,6 +740,7 @@ fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
         "wide" -> R.drawable.mouth_wide
         "th" -> R.drawable.mouth_th
         "tongueup" -> R.drawable.mouth_tongueup
+        "teeth" -> R.drawable.mouth_wide
         "relaxed", "open" -> R.drawable.mouth_relaxed
         else -> R.drawable.mouth_rest
     }
@@ -2697,7 +2698,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.6", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.7", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
         }
