@@ -730,7 +730,8 @@ fun MouthCanvas(shape: MouthShape, modifier: Modifier = Modifier) {
 /**
  * The teacher's face: AI-generated 3D-style artwork, one pose per mouth
  * shape, crossfaded so switching poses reads as movement. The "open"
- * shape reuses the relaxed pose (its short vowel is nearly identical).
+ * shape has its own jaw-dropped pose (the /æ/ of "cat"); "relaxed" is
+ * the near-closed short-vowel pose.
  */
 @Composable
 fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
@@ -741,7 +742,8 @@ fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
         "th" -> R.drawable.mouth_th
         "tongueup" -> R.drawable.mouth_tongueup
         "teeth" -> R.drawable.mouth_wide
-        "relaxed", "open" -> R.drawable.mouth_relaxed
+        "relaxed" -> R.drawable.mouth_relaxed
+        "open" -> R.drawable.mouth_open
         else -> R.drawable.mouth_rest
     }
     Crossfade(targetState = res, animationSpec = tween(160), label = "mouthFigure") { r ->
