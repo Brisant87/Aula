@@ -1591,6 +1591,7 @@ fun HoyScreen(
     }
 
     var started by remember { mutableStateOf(false) }
+    var quick by remember { mutableStateOf(false) }
     var phase by remember { mutableStateOf(0) }
     var guided by remember { mutableStateOf(false) }
     var teacherVoice by remember { mutableStateOf(true) }
@@ -1606,6 +1607,10 @@ fun HoyScreen(
             .padding(16.dp)
     ) {
         ViewTitle("Hoy", Dates.label() + " · una página nueva de tu diario.")
+        if (quick) {
+            QuickReviewScreen(store, settings, tts, bump) { quick = false }
+            return@Column
+        }
         if (!started) {
             JournalCard(oliveCard = true) {
                 Row(verticalAlignment = Alignment.Top) {
@@ -1660,6 +1665,26 @@ fun HoyScreen(
                         Text("Su voz durante la clase", fontWeight = FontWeight.Bold)
                         NoteText("Te habla en inglés sencillo en cada paso; sus explicaciones van por escrito, en español.")
                     }
+                }
+            }
+            val dueCount = store.retentionDueKeys().size
+            val activeCount = store.activePatternsRanked().size
+            if (dueCount + activeCount > 0) {
+                Spacer(Modifier.height(14.dp))
+                JournalCard {
+                    Stamp("Repaso rápido · 2 minutos", olive = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("¿Poco tiempo hoy? Atiende solo lo que ya debes.", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        buildString {
+                            if (dueCount > 0) append("$dueCount confirmación(es) de retención debida(s). ")
+                            if (activeCount > 0) append("$activeCount patrón(es) activo(s) pidiendo práctica. ")
+                            append("Sin contenido nuevo y sin tocar tu nivel: mantenimiento puro.")
+                        }
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    PrimaryButton("⚡ Repasar ahora") { quick = true }
                 }
             }
             Spacer(Modifier.height(14.dp))
@@ -2547,6 +2572,122 @@ fun CaminoScreen(
     }
 }
 
+/**
+ * Repaso rápido — the two-minute maintenance mode. It serves ONLY
+ * obligations that already exist: retention confirmations that are
+ * due and one practice item per active pattern. It never runs the
+ * transfer test, so it cannot promote a pattern, unlock the Camino,
+ * or stand in for today's lesson — it keeps what is owed from going
+ * stale on a busy day. Practice events log in the "repaso" context.
+ */
+@Composable
+fun QuickReviewScreen(
+    store: MirrorStore,
+    settings: SettingsStore,
+    tts: TtsManager,
+    bump: () -> Unit,
+    onExit: () -> Unit
+) {
+    // Snapshot the obligations once: logging during the review must
+    // not reshuffle the queue mid-run.
+    val steps = remember {
+        buildList {
+            store.retentionDueKeys().take(2).forEach { add("ret" to it) }
+            store.activePatternsRanked().take(2).forEach { add("prac" to it.key) }
+        }
+    }
+    var idx by remember { mutableStateOf(0) }
+    val done = idx >= steps.size
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        TextButton(onClick = onExit) { Text("← Salir del repaso") }
+        ViewTitle("Repaso rápido", "Solo lo que ya debes: ni contenido nuevo ni atajos. Esto es mantenimiento, no la clase de hoy.")
+        if (steps.isEmpty()) {
+            JournalCard(oliveCard = true) {
+                Stamp("Nada pendiente", olive = true)
+                Spacer(Modifier.height(8.dp))
+                Text("No debes ninguna confirmación ni tienes patrones activos. Tu diario está al día.", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(12.dp))
+                PrimaryButton("Volver") { onExit() }
+            }
+            return@Column
+        }
+        if (done) {
+            JournalCard(oliveCard = true) {
+                Stamp("Repaso completo ✓", olive = true)
+                Spacer(Modifier.height(8.dp))
+                Text("Atendiste ${steps.size} pendientes en un momento.", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(6.dp))
+                Text("Nada de esto cambió tu nivel ni cuenta como la clase de hoy: fue mantenimiento. Cuando tengas tiempo, Hoy te espera con la página de hoy.")
+                Spacer(Modifier.height(12.dp))
+                PrimaryButton("Volver") { onExit() }
+            }
+            return@Column
+        }
+
+        val (kind, key) = steps[idx]
+        NoteText("Pendiente ${idx + 1} de ${steps.size}")
+        Spacer(Modifier.height(10.dp))
+        key(idx) {
+            if (kind == "ret") {
+                JournalCard {
+                    Stamp("Confirmación debida")
+                    Spacer(Modifier.height(8.dp))
+                    Text("«${patternInfo(key).name}» ya era tuyo; hoy toca confirmar que sigue ahí.", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(12.dp))
+                RetentionCheck(key, store, settings, tts, bump) { idx++ }
+            } else {
+                val info = patternInfo(key)
+                JournalCard {
+                    Stamp("Patrón activo")
+                    Spacer(Modifier.height(8.dp))
+                    Text(info.name, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(4.dp))
+                    NoteText(info.explain)
+                }
+                Spacer(Modifier.height(12.dp))
+                when (info.kind) {
+                    "guide" -> {
+                        if (settings.guide) {
+                            GuideCard(info.word, "repaso", store, tts, bump, onRated = { idx++ })
+                        } else {
+                            JournalCard {
+                                Text("La Guía está apagada en Ajustes; este punto se queda para cuando la enciendas.")
+                                Spacer(Modifier.height(10.dp))
+                                PrimaryButton("Continuar →") { idx++ }
+                            }
+                        }
+                    }
+                    "cognates" -> {
+                        val di = Dates.dayIndex()
+                        val item = COGNATES[(di + idx * 7 + 3) % COGNATES.size]
+                        RecallQuestion(item, distractFor(item, idx + 5), "repaso", store, bump) { idx++ }
+                    }
+                    "listening" -> {
+                        val lp = LISTENING.filter { !it.transfer }
+                        val item = lp[(Dates.dayIndex() + idx) % lp.size]
+                        ListeningExercise(
+                            item, "repaso", store, tts,
+                            support = store.supportLevel(key) >= 1, bump = bump
+                        ) { idx++ }
+                    }
+                    else -> {
+                        val pool = poolFor(key)
+                        val item = pool[(Dates.dayIndex() + store.events.size + idx) % pool.size]
+                        SyntaxBuilder(item, "repaso", store, tts, bump) { idx++ }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ------------------------------------------------------------------ AJUSTES
 
 @Composable
@@ -2769,7 +2910,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.9", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.10", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
         }
