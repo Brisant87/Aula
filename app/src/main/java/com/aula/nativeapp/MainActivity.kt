@@ -1592,6 +1592,7 @@ fun HoyScreen(
 
     var started by remember { mutableStateOf(false) }
     var quick by remember { mutableStateOf(false) }
+    var placing by remember { mutableStateOf(false) }
     var phase by remember { mutableStateOf(0) }
     var guided by remember { mutableStateOf(false) }
     var teacherVoice by remember { mutableStateOf(true) }
@@ -1611,7 +1612,28 @@ fun HoyScreen(
             QuickReviewScreen(store, settings, tts, bump) { quick = false }
             return@Column
         }
+        if (placing) {
+            PlacementScreen(store, settings, tts, bump) { placing = false }
+            return@Column
+        }
         if (!started) {
+            if (store.events.isEmpty() && store.camino.isEmpty() && !settings.placementDone) {
+                JournalCard {
+                    Stamp("¿Primera vez aquí?", olive = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("¿Ya sabes algo de inglés?", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Haz la prueba de nivel: ítems nuevos, nivel por nivel, con la misma regla que el Camino (al menos 2 de 3 al primer intento). Lo que pases queda completado de verdad; paramos en el primer nivel que no salga.")
+                    Spacer(Modifier.height(10.dp))
+                    PrimaryButton("Hacer la prueba de nivel") { placing = true }
+                    Spacer(Modifier.height(8.dp))
+                    GhostButton("Empezar desde cero") {
+                        settings.placementDone = true
+                        bump()
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+            }
             JournalCard(oliveCard = true) {
                 Row(verticalAlignment = Alignment.Top) {
                     TeacherAvatar(tts, 84.dp)
@@ -2573,6 +2595,99 @@ fun CaminoScreen(
 }
 
 /**
+ * Placement check — offered once, only while the diary is empty.
+ * It runs the Camino's own unseen-item tests level by level, in
+ * order, and stops at the first level the learner does not pass.
+ * A pass writes the same Camino entry the level's own test would
+ * (same items, same first-attempt rule, at least two thirds), so
+ * placement is never a shortcut around the house standard: it IS
+ * the standard, taken early. Passing items log in the "placement"
+ * context; the evidence is real and the Espejo sees it.
+ */
+@Composable
+fun PlacementScreen(
+    store: MirrorStore,
+    settings: SettingsStore,
+    tts: TtsManager,
+    bump: () -> Unit,
+    onExit: () -> Unit
+) {
+    var levelIdx by remember { mutableStateOf(0) }
+    var itemIdx by remember { mutableStateOf(0) }
+    var before by remember { mutableStateOf(store.events.size) }
+    var placed by remember { mutableStateOf(0) }
+    var finished by remember { mutableStateOf(false) }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        TextButton(onClick = onExit) { Text("← Salir (puedes hacerla otro día)") }
+        ViewTitle("Prueba de nivel", "Ítems que nunca has visto, nivel por nivel. Paramos en el primero que no salga: ahí empieza tu Camino.")
+        if (finished) {
+            JournalCard(oliveCard = placed > 0) {
+                if (placed > 0) {
+                    Stamp("Nivel alcanzado: $placed de ${LEVELS.size}", olive = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Pasaste ${if (placed == 1) "el primer nivel" else "los primeros $placed niveles"} con ítems nuevos, al primer intento.", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Quedaron en tu Camino como completados, con la misma regla de siempre (al menos 2 de 3 al primer intento). Tu clase de Hoy y tu Espejo ya trabajan desde ahí.")
+                } else {
+                    Stamp("Empiezas en el Nivel 1", olive = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("El primer nivel aún no sale con ítems nuevos — perfecto: para eso está el curso.", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Sin castigo: los intentos quedaron en tu diario y tu Espejo ya los está mirando. Empieza en Hoy cuando quieras.")
+                }
+                Spacer(Modifier.height(12.dp))
+                PrimaryButton("Volver a Hoy") { onExit() }
+            }
+            return@Column
+        }
+
+        val lvl = LEVELS[levelIdx]
+        val item = TRANSFER.first { it.id == lvl.items[itemIdx] }
+        NoteText("Nivel ${lvl.n} · ítem ${itemIdx + 1} de ${lvl.items.size} — todo nuevo, sin pistas.")
+        Spacer(Modifier.height(10.dp))
+        key(lvl.id + item.id) {
+            TransferItemRunner(item, store, settings, tts, bump, context = "placement") {
+                if (itemIdx < lvl.items.size - 1) {
+                    itemIdx++
+                } else {
+                    val evs = store.events.drop(before)
+                    var score = 0
+                    val seen = mutableSetOf<String>()
+                    for (e in evs) {
+                        if (e.context == "placement" && seen.add(e.pattern)) {
+                            if (e.correct) score++
+                        }
+                    }
+                    val pass = score >= (lvl.items.size * 2 + 2) / 3
+                    if (pass) {
+                        if (!store.camino.contains(lvl.id)) store.saveCamino(lvl.id, score)
+                        placed = levelIdx + 1
+                        if (levelIdx < LEVELS.size - 1) {
+                            levelIdx++
+                            itemIdx = 0
+                            before = store.events.size
+                        } else {
+                            settings.placementDone = true
+                            finished = true
+                        }
+                    } else {
+                        settings.placementDone = true
+                        finished = true
+                    }
+                    bump()
+                }
+            }
+        }
+    }
+}
+
+/**
  * Repaso rápido — the two-minute maintenance mode. It serves ONLY
  * obligations that already exist: retention confirmations that are
  * due and one practice item per active pattern. It never runs the
@@ -2910,7 +3025,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.10", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.11", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
         }
