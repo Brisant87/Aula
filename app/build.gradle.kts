@@ -13,10 +13,16 @@ android {
     applicationId = "com.aula.nativeapp"
     minSdk = 24
     targetSdk = 36
-    versionCode = 11
-    versionName = "0.11"
+    versionCode = 12
+    versionName = "0.12"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // The in-app speech engine (sherpa-onnx) ships native libraries
+    // for several ABIs; the app targets the owner's arm64 devices.
+    ndk {
+      abiFilters.add("arm64-v8a")
+    }
   }
 
   // Debug builds sign with the shared debug.keystore at the project root.
@@ -66,6 +72,11 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.androidx.security.crypto)
   implementation(libs.kotlinx.coroutines.core)
+  // The in-app speech engine (LocalAsrEngine): a local file
+  // dependency because sherpa-onnx is not on Maven Central — CI
+  // downloads the pinned AAR into app/libs/ before building (see
+  // the workflow's speech-engine fetch step).
+  implementation(files("libs/sherpa-onnx.aar"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   testImplementation("junit:junit:4.13.2")
 }
