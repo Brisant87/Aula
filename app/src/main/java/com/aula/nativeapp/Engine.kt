@@ -365,6 +365,13 @@ class SettingsStore(context: Context) {
             prefs.edit().putBoolean("guide", v).apply()
         }
 
+    /** True once the learner has taken (or declined) the placement check. */
+    var placementDone: Boolean
+        get() = prefs.getBoolean("placementDone", false)
+        set(v) {
+            prefs.edit().putBoolean("placementDone", v).apply()
+        }
+
     /** Chosen Chirp voice for the cloud teacher (Ajustes). */
     var voice: String
         get() = prefs.getString("voice", "en-US-Chirp3-HD-Aoede") ?: "en-US-Chirp3-HD-Aoede"
