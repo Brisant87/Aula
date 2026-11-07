@@ -6,10 +6,13 @@
          optional cloud voice, with the learner's own Google key (Ajustes). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Microphone: ONLY for Conversación en vivo (and the word-retry
-         practice) inside Conversaciones — the learner speaks, the
-         on-device recognizer transcribes, nothing is recorded or
-         stored. Denying it leaves every other feature untouched. -->
+    <!-- Microphone: for Conversación en vivo and for Copia in the
+         Guide (recording + automatic check). Copia takes are kept
+         only as temporary files in the app's private cache for
+         on-device playback; recognition runs through the system
+         SpeechRecognizer; the app itself stores no voice and
+         transmits none. Denying it leaves every other feature
+         untouched. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
