@@ -12,6 +12,12 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      - name: Unpack the bundled voice clips
+        run: |
+          mkdir -p app/src/main/assets
+          unzip -o -q voice_clips.zip -d app/src/main/assets
+          ls app/src/main/assets/voice | wc -l
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
