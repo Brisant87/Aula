@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,6 +54,7 @@ jobs:
 
       - name: Upload unit test reports
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports
@@ -64,8 +68,27 @@ jobs:
           arguments: assembleDebug --stacktrace
 
       - name: Upload the APK
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: aula-native-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Artifact storage quota on this account is unreliable (it killed
+      # run #55 after a green gate), so the APK is ALSO delivered as a
+      # file on the apk-delivery branch — the route that counts.
+      - name: Deliver the APK on the apk-delivery branch
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk /tmp/AulaNative.apk
+          git fetch origin apk-delivery || true
+          if git rev-parse --verify origin/apk-delivery >/dev/null 2>&1; then
+            git checkout -B apk-delivery origin/apk-delivery
+          else
+            git checkout --orphan apk-delivery
+          fi
+          git rm -rf . >/dev/null 2>&1 || true
+          cp /tmp/AulaNative.apk AulaNative.apk
+          git add AulaNative.apk
+          git -c user.email="ci@aula.local" -c user.name="Aula CI" commit -m "Deliver APK from run ${{ github.run_number }}" || echo "no change"
+          git push origin apk-delivery --force
