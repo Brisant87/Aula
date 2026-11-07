@@ -183,6 +183,9 @@ fun LiveConversationScreen(
     // shown (being replaced was not a recognition failure).
     var activeListen by remember { mutableStateOf<String?>(null) }
     var swallowNextError by remember { mutableStateOf(false) }
+    // Build E badge: the last graded transcript came from the app's
+    // own on-device engine, not the phone's recognition service.
+    var lastHeardViaApp by remember { mutableStateOf(false) }
 
     // Permission flow (M2): which funnel is waiting on the system
     // prompt, and which funnel was denied (with whether the denial
@@ -313,6 +316,7 @@ fun LiveConversationScreen(
         // A result settles whichever attempt produced it: any pending
         // error-swallow belongs to a replaced attempt and dies here.
         swallowNextError = false
+        lastHeardViaApp = probe.lastRecognitionSource.value == "app"
         val state = session ?: return@LaunchedEffect
         if (retryArmed) {
             retryArmed = false
@@ -700,6 +704,10 @@ fun LiveConversationScreen(
                 if (micError != null) {
                     Spacer(Modifier.height(8.dp))
                     FeedbackBox(micError!!, good = false)
+                }
+                if (lastHeardViaApp) {
+                    Spacer(Modifier.height(8.dp))
+                    NoteText("Esa respuesta la transcribió el motor de voz de la app, dentro de tu teléfono — el servicio del teléfono no escuchó nada.")
                 }
                 if (denialFunnel == "reply") {
                     Spacer(Modifier.height(8.dp))

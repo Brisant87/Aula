@@ -11,6 +11,10 @@ import android.speech.SpeechRecognizer
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -600,6 +604,26 @@ class LiveSpeechProbe(context: Context) {
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
+    // -- El oído propio (Build E): while the system recognizer
+    // listens, a plain capture keeps the take itself. At settlement,
+    // ONLY when the recognizer banked nothing usable and the
+    // capture holds real signal, the app's own on-device engine
+    // (LocalAsrEngine) transcribes the finished capture and fills
+    // the empty candidate — once per attempt, badged via
+    // [lastRecognitionSource] ("app"). A genuine recognizer
+    // transcript is never touched; an engine failure settles the
+    // attempt exactly as it settled before the engine existed.
+    private val _lastRecognitionSource = MutableStateFlow<String?>(null)
+    val lastRecognitionSource: StateFlow<String?> = _lastRecognitionSource.asStateFlow()
+
+    private val _asrWorking = MutableStateFlow(false)
+    val asrWorking: StateFlow<Boolean> = _asrWorking.asStateFlow()
+
+    private val asrScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var capture: WavCapture? = null
+    private var asrAttempted = false
+    private var attemptSeq = 0
+
     private var recognizer: SpeechRecognizer? = null
 
     // -- Watchdog state (Mo4). Some devices' recognition services
@@ -622,12 +646,78 @@ class LiveSpeechProbe(context: Context) {
     }
 
     /**
+     * Stops the parallel capture and returns its PCM bytes ONLY
+     * when they hold real speech energy — a silent or near-silent
+     * capture is not a take, and the engine is never asked to
+     * transcribe one.
+     */
+    private fun stopCaptureSpeech(): ByteArray? {
+        val cap = capture ?: return null
+        capture = null
+        val bytes = cap.stopAndGet()
+        return if (bytes != null && cap.peak >= WavCapture.SIGNAL_PEAK) bytes else null
+    }
+
+    private fun stopCaptureDiscard() {
+        capture?.stopQuietly()
+        capture = null
+    }
+
+    /**
+     * The settlement rescue: the recognizer banked nothing, the
+     * capture holds speech — the app's own engine gets its one
+     * attempt. Success publishes exactly like a recognizer result
+     * (evidence first, then the transcript) with the source badged
+     * "app"; failure runs [onFail], which settles the attempt the
+     * way it would have settled anyway. A result from a superseded
+     * attempt (a newer startListening bumped the sequence) is
+     * dropped silently.
+     */
+    private fun tryLocalAsr(bytes: ByteArray, token: Int, onFail: () -> Unit) {
+        asrAttempted = true
+        _asrWorking.value = true
+        asrScope.launch {
+            val text = try {
+                LocalAsrEngine.transcribe(appContext, bytes)
+            } catch (e: Exception) {
+                null
+            }
+            _asrWorking.value = false
+            if (token != attemptSeq) return@launch
+            if (!text.isNullOrBlank()) {
+                _lastEvidence.value = RecognitionEvidence(
+                    hypotheses = listOf(text),
+                    confidences = null
+                )
+                _lastRecognitionSource.value = "app"
+                _micError.value = null
+                _lastRecognition.value = text
+            } else {
+                onFail()
+            }
+        }
+    }
+
+    /**
      * The attempt is dead: disarm it and surface a NON-scored error
      * line. Nothing is graded on a timeout, ever — the consumer's
      * error path closes the attempt exactly like a recognizer error,
-     * and a recognizer error logs nothing.
+     * and a recognizer error logs nothing. (Build E: a dead service
+     * no longer ends the story when the capture holds speech — the
+     * app's own engine transcribes first, and only its failure
+     * expires the attempt.)
      */
     private fun expireAttempt() {
+        cancelWatchdogs()
+        val bytes = stopCaptureSpeech()
+        if (bytes != null && !asrAttempted) {
+            tryLocalAsr(bytes, attemptSeq) { doExpireAttempt() }
+            return
+        }
+        doExpireAttempt()
+    }
+
+    private fun doExpireAttempt() {
         cancelWatchdogs()
         try {
             recognizer?.cancel()
@@ -683,7 +773,7 @@ class LiveSpeechProbe(context: Context) {
             // only as this non-scored micError line. Network/server
             // failures get their own wording so the learner knows it
             // is a connection problem, not a pronunciation problem.
-            _micError.value = when (error) {
+            val mapped = when (error) {
                 SpeechRecognizer.ERROR_NETWORK ->
                     "Sin conexión: no se pudo contactar el servicio de reconocimiento. Revisa tu conexión e intenta de nuevo."
                 SpeechRecognizer.ERROR_SERVER ->
@@ -696,6 +786,24 @@ class LiveSpeechProbe(context: Context) {
                     "Se necesita permiso de micrófono para probar tu voz."
                 else -> "No se pudo reconocer tu voz. Intenta de nuevo."
             }
+            // Build E: a no-match (or a silent timeout) means the
+            // service heard the take and banked nothing — exactly
+            // the case the app's own engine exists for. When the
+            // parallel capture holds real speech, the error line is
+            // DEFERRED until the engine has had its one attempt; if
+            // it transcribes, no error is ever shown. Every other
+            // error settles immediately, as before.
+            if ((error == SpeechRecognizer.ERROR_NO_MATCH ||
+                    error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) && !asrAttempted
+            ) {
+                val bytes = stopCaptureSpeech()
+                if (bytes != null) {
+                    tryLocalAsr(bytes, attemptSeq) { _micError.value = mapped }
+                    return
+                }
+            }
+            stopCaptureDiscard()
+            _micError.value = mapped
         }
 
         override fun onResults(results: Bundle?) {
@@ -706,6 +814,29 @@ class LiveSpeechProbe(context: Context) {
             _micError.value = null
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             val spoken = matches?.firstOrNull() ?: ""
+            if (spoken.isBlank()) {
+                // Build E: an empty result is a banked nothing, not
+                // an answer — it must NEVER reach a consumer as a
+                // gradeable transcript (an empty string used to read
+                // as "heard something else" in Copia's auto-check).
+                // The app's own engine gets its one attempt on the
+                // capture; its failure settles as a plain no-match.
+                _lastEvidence.value = null
+                if (!asrAttempted) {
+                    val bytes = stopCaptureSpeech()
+                    if (bytes != null) {
+                        tryLocalAsr(bytes, attemptSeq) {
+                            _micError.value = "No se detectó voz clara. Intenta de nuevo."
+                        }
+                        return
+                    }
+                }
+                stopCaptureDiscard()
+                _micError.value = "No se detectó voz clara. Intenta de nuevo."
+                return
+            }
+            stopCaptureDiscard()
+            _lastRecognitionSource.value = null
             // Publish the full evidence BEFORE the raw top hypothesis,
             // in the same synchronous callback, so any consumer
             // reacting to the raw value already sees this result's
@@ -758,6 +889,11 @@ class LiveSpeechProbe(context: Context) {
         _lastRecognition.value = null
         _lastEvidence.value = null
         cancelWatchdogs()
+        // A new attempt supersedes any in-flight engine rescue from
+        // the previous one (tryLocalAsr checks the sequence).
+        attemptSeq++
+        asrAttempted = false
+        _lastRecognitionSource.value = null
         val rec = recognizer
         if (rec == null) {
             // No recogniser on this device: never report "listening".
@@ -765,6 +901,11 @@ class LiveSpeechProbe(context: Context) {
             _micError.value = "El reconocimiento de voz no está disponible en este dispositivo."
             return
         }
+        // The parallel capture starts with the attempt: if the
+        // service banks nothing, the take itself still exists for
+        // the app's own engine. A capture that fails to start
+        // changes nothing about the attempt.
+        capture = WavCapture().also { it.start() }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
@@ -787,6 +928,7 @@ class LiveSpeechProbe(context: Context) {
             startWatchdog = watchdog
             watchdogHandler.postDelayed(watchdog, NO_CALLBACK_WATCHDOG_MS)
         } catch (e: Exception) {
+            stopCaptureDiscard()
             _isListening.value = false
             _micError.value = "No se pudo iniciar el micrófono. Revisa el permiso de micrófono."
         }
@@ -826,6 +968,8 @@ class LiveSpeechProbe(context: Context) {
 
     fun destroy() {
         cancelWatchdogs()
+        stopCaptureDiscard()
+        attemptSeq++
         try {
             recognizer?.destroy()
         } catch (e: Exception) {

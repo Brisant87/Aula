@@ -782,6 +782,8 @@ fun GuideCard(
     val srListening by probe.isListening.collectAsState()
     val srHeard by probe.lastRecognition.collectAsState()
     val srError by probe.micError.collectAsState()
+    val srSource by probe.lastRecognitionSource.collectAsState()
+    val srAsrBusy by probe.asrWorking.collectAsState()
     var checkArmed by remember(wordKey) { mutableStateOf(false) }
     var autoNote by remember(wordKey) { mutableStateOf<String?>(null) }
     var autoKind by remember(wordKey) { mutableStateOf("info") }
@@ -890,13 +892,17 @@ fun GuideCard(
         }
     }
 
-    fun applyAutoVerdict(ok: Boolean, heardText: String) {
+    fun applyAutoVerdict(ok: Boolean, heardText: String, viaApp: Boolean = false) {
         val wasFirst = !rated
         autoKind = if (ok) "good" else "bad"
         autoNote = (if (ok) {
             "✓ La app escuchó «" + heardText + "»: eso era la palabra."
         } else {
             "La app escuchó «" + heardText.ifBlank { "…" } + "», no «" + gw.word + "». Mira la boca otra vez y reintenta cuando quieras."
+        }) + (if (viaApp) {
+            " Lo transcribió el motor de voz de la app, dentro de tu teléfono."
+        } else {
+            ""
         }) + if (wasFirst) {
             " Anotado en tu diario."
         } else {
@@ -936,7 +942,7 @@ fun GuideCard(
             checkArmed = false
             val target = gw.word.lowercase().trim()
             val tokens = heard.lowercase().split(Regex("[^a-z']+")).filter { it.isNotBlank() }
-            applyAutoVerdict(tokens.contains(target), heard.trim())
+            applyAutoVerdict(tokens.contains(target), heard.trim(), viaApp = srSource == "app")
         }
     }
     LaunchedEffect(srError) {
@@ -1209,6 +1215,10 @@ fun GuideCard(
             } else {
                 withMic("check")
             }
+        }
+        if (srAsrBusy && checkArmed) {
+            Spacer(Modifier.height(10.dp))
+            NoteText("Un momento: el teléfono no transcribió nada, así que el motor de voz de la app está escuchando tu grabación, aquí dentro…")
         }
         autoNote?.let {
             Spacer(Modifier.height(10.dp))
@@ -3025,9 +3035,11 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.11", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.12", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
+            Spacer(Modifier.height(6.dp))
+            NoteText("El oído propio: si el reconocedor del teléfono no transcribe nada, Aula puede escuchar tu grabación con su propio motor de voz, dentro del teléfono y sin internet. Cuando lo usa, te lo dice en la misma respuesta.")
         }
     }
 
