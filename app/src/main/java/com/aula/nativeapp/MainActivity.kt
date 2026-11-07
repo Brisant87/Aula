@@ -2563,6 +2563,45 @@ fun AjustesScreen(
     var guideOn by remember { mutableStateOf(settings.guide) }
     var showReset by remember { mutableStateOf(false) }
     var resetDone by remember { mutableStateOf(false) }
+    var progressStatus by remember { mutableStateOf<String?>(null) }
+    var hasRestore by remember { mutableStateOf(store.hasRestorePoint()) }
+    val ctx = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            progressStatus = try {
+                val json = store.exportJson()
+                if (json.isEmpty()) throw Exception("empty")
+                ctx.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(json.toByteArray(Charsets.UTF_8))
+                } ?: throw Exception("no stream")
+                "Copia guardada ✓ Llévala a tu otro teléfono y usa «Traer una copia» allí."
+            } catch (e: Exception) {
+                "No se pudo guardar la copia. Inténtalo otra vez."
+            }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            progressStatus = try {
+                val text = ctx.contentResolver.openInputStream(uri)
+                    ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                    ?: throw Exception("no stream")
+                if (store.importJson(text)) {
+                    hasRestore = true
+                    bump()
+                    "Copia traída ✓ Tu Espejo y tu Camino ya son los de la copia. Si no era lo que querías, «Deshacer» vuelve atrás."
+                } else {
+                    "Ese archivo no es una copia de Aula. No se cambió nada."
+                }
+            } catch (e: Exception) {
+                "No se pudo leer ese archivo. No se cambió nada."
+            }
+        }
+    }
 
     Column(
         Modifier
@@ -2575,7 +2614,7 @@ fun AjustesScreen(
         JournalCard {
             Stamp("La voz", olive = true)
             Spacer(Modifier.height(8.dp))
-            Text("Sin clave IA, la voz es la de tu teléfono (motor de Google, si está instalado).", style = MaterialTheme.typography.titleMedium)
+            Text("Las frases fijas de la app suenan con grabaciones incluidas en la propia app: esa voz nunca depende del teléfono. El resto —lo que la profesora improvisa contigo— usa tu clave IA o, sin ella, la voz del teléfono.", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             Text("Velocidad de la voz: ${"%.2f".format(speed)}×")
             Slider(
@@ -2596,7 +2635,7 @@ fun AjustesScreen(
             Spacer(Modifier.height(8.dp))
             Text("Una voz de IA natural (Google Chirp), como en PuenteLingua", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            NoteText("Pega tu clave de Google Cloud una sola vez: queda cifrada en este teléfono, fuera de las copias de seguridad, y se usa solo para dar voz a las frases en inglés. Cada frase que ya sonó queda guardada en el teléfono, así que repetirla es instantáneo y no gasta nada. Sin clave —o sin conexión— la app usa la voz del teléfono, como hasta ahora.")
+            NoteText("Pega tu clave de Google Cloud una sola vez: queda cifrada en este teléfono, fuera de las copias de seguridad, y se usa solo para dar voz a las frases en inglés. Cada frase que ya sonó queda guardada en el teléfono, así que repetirla es instantáneo y no gasta nada. Sin clave —o sin conexión— las frases sin grabación usan la voz del teléfono.")
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = keyText,
@@ -2700,7 +2739,37 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.7", style = MaterialTheme.typography.titleMedium)
+            Stamp("Tu progreso", olive = true)
+            Spacer(Modifier.height(8.dp))
+            Text("Una copia de tu diario, en un archivo tuyo", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
+            Text("Guarda tu Espejo y tu Camino en un archivo para cambiar de teléfono sin perder nada, o trae aquí una copia guardada antes. Tu clave de voz nunca entra en la copia: vive cifrada en cada teléfono.")
+            Spacer(Modifier.height(10.dp))
+            PrimaryButton("Guardar una copia") {
+                exportLauncher.launch("aula-progreso.json")
+            }
+            Spacer(Modifier.height(8.dp))
+            GhostButton("Traer una copia") {
+                importLauncher.launch(arrayOf("application/json"))
+            }
+            if (hasRestore) {
+                Spacer(Modifier.height(8.dp))
+                GhostButton("Deshacer la última importación") {
+                    if (store.restorePoint()) {
+                        bump()
+                        progressStatus = "Vuelta atrás hecha ✓ Intercambié tu diario con el punto de restauración: deshacer también se puede deshacer."
+                    }
+                }
+            }
+            if (progressStatus != null) {
+                Spacer(Modifier.height(10.dp))
+                FeedbackBox(progressStatus!!, good = true)
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+
+        JournalCard {
+            Text("Aula · versión nativa 0.9", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
         }
