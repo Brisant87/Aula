@@ -182,7 +182,73 @@ class MirrorStore(context: Context) {
 
     fun reset() {
         events.clear(); dismissed.clear(); progress.clear(); camino.clear()
-        prefs.edit().remove(KEY_JSON).apply()
+        prefs.edit().remove(KEY_JSON).remove(KEY_RESTORE).apply()
+    }
+
+    // ------------------------------------------------------------ export / import
+
+    /**
+     * The whole diary as one portable JSON document: Espejo + Camino.
+     * The voice key is NOT part of it — it never leaves its encrypted
+     * store — and neither are the Ajustes preferences.
+     */
+    fun exportJson(): String {
+        save()
+        val raw = prefs.getString(KEY_JSON, null) ?: "{}"
+        return try {
+            JSONObject()
+                .put("app", "aula-native")
+                .put("kind", "progreso")
+                .put("version", 1)
+                .put("mirror", JSONObject(raw))
+                .toString()
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /**
+     * Import a document produced by [exportJson]. Before anything is
+     * replaced, the current diary is saved as a restore point;
+     * [restorePoint] swaps the two states, so the undo is itself
+     * undoable. A file that is not an Aula progress document, or whose
+     * diary has none of the expected sections, changes nothing.
+     */
+    fun importJson(text: String): Boolean {
+        return try {
+            val root = JSONObject(text)
+            if (root.optString("app") != "aula-native") return false
+            val mirror = root.optJSONObject("mirror") ?: return false
+            if (!mirror.has("events") && !mirror.has("progress") && !mirror.has("camino")) {
+                return false
+            }
+            val current = prefs.getString(KEY_JSON, null) ?: ""
+            prefs.edit().putString(KEY_RESTORE, current).apply()
+            prefs.edit().putString(KEY_JSON, mirror.toString()).apply()
+            reload()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun hasRestorePoint(): Boolean = prefs.contains(KEY_RESTORE)
+
+    /** Swap the current diary with the restore point. */
+    fun restorePoint(): Boolean {
+        if (!hasRestorePoint()) return false
+        val backup = prefs.getString(KEY_RESTORE, "") ?: ""
+        val current = prefs.getString(KEY_JSON, null) ?: ""
+        val ed = prefs.edit().putString(KEY_RESTORE, current)
+        if (backup.isEmpty()) ed.remove(KEY_JSON) else ed.putString(KEY_JSON, backup)
+        ed.apply()
+        reload()
+        return true
+    }
+
+    private fun reload() {
+        events.clear(); dismissed.clear(); progress.clear(); camino.clear()
+        load()
     }
 
     // ------------------------------------------------------------ engine
@@ -277,6 +343,7 @@ class MirrorStore(context: Context) {
     companion object {
         private const val PREFS_NAME = "aula_mirror"
         private const val KEY_JSON = "store_json_v1"
+        private const val KEY_RESTORE = "store_restore_v1"
     }
 }
 
@@ -529,7 +596,13 @@ class VoiceKeyStore(context: Context) {
 private class HttpVoiceException(val code: Int) : Exception("HTTP " + code)
 
 /**
- * Voice, two engines:
+ * Voice, three layers, in order:
+ *
+ * 0. Bundled recordings (BundledClips): every fixed text the app can
+ *    speak ships as a recording inside the APK and plays first — the
+ *    one voice that cannot fail silently on any phone, with no key
+ *    and no network. Playback reuses the cloud path's MediaPlayer +
+ *    ticker, so the Guide's mouth still follows the real audio.
  *
  * 1. Optional AI cloud voice — Google Cloud Text-to-Speech, Chirp 3 HD
  *    (female teacher voice), falling back to WaveNet, using the
@@ -669,6 +742,16 @@ class TtsManager(
     }
 
     fun speak(text: String, slow: Boolean = false) {
+        // 0. A bundled recording of this exact text always wins: it is
+        // the one voice that cannot fail silently on any phone, needs
+        // no key and no network. Dynamic text (the teacher's briefings,
+        // read-backs of what the learner said) has no clip and falls
+        // through to the cloud voice, then the device voice.
+        val asset = BundledClips.assetFor(text)
+        if (asset != null) {
+            speakBundled(asset, text, slow)
+            return
+        }
         val key = try {
             keyProvider().trim()
         } catch (e: Exception) {
@@ -678,6 +761,51 @@ class TtsManager(
             speakCloud(text, slow, key)
         } else {
             speakDevice(text, slow)
+        }
+    }
+
+    // ---------------- bundled recordings ----------------
+
+    private val bundledDir = File(appContext.cacheDir, "bundled")
+
+    private fun speakBundled(asset: String, text: String, slow: Boolean) {
+        stopPlayer()
+        try {
+            tts?.stop()
+        } catch (e: Exception) {
+        }
+        val id = "clip-" + (++utteranceSeq)
+        currentUtteranceId = id
+        fetchExecutor.execute {
+            try {
+                if (!bundledDir.exists()) bundledDir.mkdirs()
+                val file = File(bundledDir, asset.substringAfterLast('/'))
+                if (!file.exists() || file.length() == 0L) {
+                    appContext.assets.open(asset).use { input ->
+                        file.outputStream().use { out -> input.copyTo(out) }
+                    }
+                }
+                mainHandler.post {
+                    if (currentUtteranceId == id) playCloudFile(file, text, slow, id)
+                }
+            } catch (e: Exception) {
+                // A clip that cannot play is never the learner's
+                // problem: fall through to the synthesized voices.
+                mainHandler.post {
+                    if (currentUtteranceId == id) {
+                        val key = try {
+                            keyProvider().trim()
+                        } catch (ex: Exception) {
+                            ""
+                        }
+                        if (key.isNotEmpty() && !cloudBlocked) {
+                            speakCloud(text, slow, key)
+                        } else {
+                            speakDevice(text, slow)
+                        }
+                    }
+                }
+            }
         }
     }
 
