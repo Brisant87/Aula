@@ -128,7 +128,9 @@ private val OliveSoft = Color(0xFFE6EBD2)
 private val Ochre = Color(0xFFB07D2B)
 private val OchreSoft = Color(0xFFF3E3BC)
 private val OchreDeep = Color(0xFF5C4310)
-private val Ink = Color(0xFF28211B)
+// Ink is shared with the separate v0.13 screens (LabScreen,
+// MonthScreen) — it must stay file-external, not private.
+val Ink = Color(0xFF28211B)
 private val JournalLine = Color(0xFFDCCBA6)
 private val GoodBg = Color(0xFFE4ECD2)
 private val BadBg = Color(0xFFF9E4D4)
@@ -1335,7 +1337,7 @@ fun GuideCard(
 // ------------------------------------------------------------------ transfer & retention
 
 @Composable
-private fun TransferItemRunner(
+fun TransferItemRunner(
     item: TransferItem,
     store: MirrorStore,
     settings: SettingsStore,
