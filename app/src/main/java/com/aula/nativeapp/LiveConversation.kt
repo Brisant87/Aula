@@ -2095,7 +2095,7 @@ object LiveConversationBanks {
                         "It is for my daughter.",
                         "For me, thank you."
                     ),
-                    targetKeywords = listOf("daughter", "child", "me"),
+                    targetKeywords = listOf("daughter", "me"),
                     clarityTipEs = "«For my daughter» — la medicina infantil es distinta."
                 ),
                 triggerKeywords = listOf("child", "daughter", "son", "kid", "baby")
@@ -2137,7 +2137,7 @@ object LiveConversationBanks {
                         "Yes, please. My back hurts.",
                         "No, thank you. Just the pills."
                     ),
-                    targetKeywords = listOf("cream", "back", "pills"),
+                    targetKeywords = listOf("back", "pills"),
                     clarityTipEs = "«My back hurts» = me duele la espalda.",
                     trapWords = listOf("sore")
                 ),
@@ -2262,7 +2262,7 @@ object LiveConversationBanks {
                         "Yes, two hundred dollars, please.",
                         "Not today, thank you."
                     ),
-                    targetKeywords = listOf("deposit", "dollars", "today"),
+                    targetKeywords = listOf("dollars", "today"),
                     clarityTipEs = "«Deposit» es verbo y sustantivo: depositar, el depósito."
                 ),
                 triggerKeywords = listOf("deposit", "cash", "money", "dollars")
@@ -2290,7 +2290,7 @@ object LiveConversationBanks {
                         "Great, I will download it.",
                         "I prefer paper, thank you."
                     ),
-                    targetKeywords = listOf("download", "app", "paper"),
+                    targetKeywords = listOf("download", "paper"),
                     clarityTipEs = "«Check your money» = revisar tu saldo."
                 ),
                 triggerKeywords = listOf("app", "phone", "online", "download")
@@ -2305,7 +2305,7 @@ object LiveConversationBanks {
                     "Thank you, I will wait.",
                     "Okay, thank you."
                 ),
-                targetKeywords = listOf("wait", "thank", "seat"),
+                targetKeywords = listOf("wait", "thank"),
                 clarityTipEs = "«Have a seat» = tome asiento.",
                 trapWords = listOf("seat")
             ),
