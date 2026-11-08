@@ -5,10 +5,10 @@ package com.aula.nativeapp
  *
  * Ported from the web app (~/workspace/aula-apk/app-assets/index.html).
  * Content: all 17 syntax items, the transfer pool (incl. la familia de la
- * «e» fantasma), all 58 cognates (46 originals + 12 from the Puente harvest;
- * Hotel and Taxi were already here), 21 guide words (the web app's 20 + sister),
- * all 9 conversations, all 6 listening items, 13 formulas, 6 cognate rules,
- * 7 day plans and the 4 Camino levels.
+ * «e» fantasma), all 72 cognates (46 originals + 12 from the Puente harvest
+ * + 14 from the v0.15 deepening; Hotel and Taxi were already here), 21 guide
+ * words (the web app's 20 + sister), all 11 conversations, all 6 listening
+ * items, 13 formulas, 6 cognate rules, 7 day plans and the 4 Camino levels.
  */
 
 data class Cognate(
@@ -143,7 +143,21 @@ val COGNATES: List<Cognate> = listOf(
     Cognate("Restaurant", "Restaurante", "perfectos", "RÉS-to-rant", "The restaurant closes at ten.", "Pierde la «-e» final: tres sílabas, no cinco."),
     Cognate("Tourist", "Turista", "perfectos", "TÚ-rist", "A tourist asked for directions.", "Pierde la «-a» final; el énfasis va al inicio."),
     Cognate("Passport", "Pasaporte", "perfectos", "PÁS-port", "I need my passport to travel.", "Pierde la «-a» y dobla la «s»: dos sílabas."),
-    Cognate("Presentation", "Presentación", "cion", "pre-sen-TÉI-shon", "Her presentation was clear and short.", "-ción se convierte en -tion; suena «shon».")
+    Cognate("Presentation", "Presentación", "cion", "pre-sen-TÉI-shon", "Her presentation was clear and short.", "-ción se convierte en -tion; suena «shon»."),
+    Cognate("Metal", "Metal", "perfectos", "MÉ-tol", "The gate is made of metal.", "Se escribe igual; la «t» suena suave, casi «r»."),
+    Cognate("Plastic", "Plástico", "perfectos", "PLÁS-tik", "This bottle is plastic.", "Pierde la «o» final y el acento."),
+    Cognate("Elephant", "Elefante", "perfectos", "É-le-fant", "The elephant is very big.", "La «ph» suena «f», como en «photo»."),
+    Cognate("Invitation", "Invitación", "cion", "in-vi-TÉI-shon", "Thank you for the invitation.", "-ción se convierte en -tion."),
+    Cognate("Celebration", "Celebración", "cion", "se-le-BRÉI-shon", "The celebration is on Saturday.", "-ción se convierte en -tion."),
+    Cognate("Electricity", "Electricidad", "dad", "i-lek-TRÍ-si-ti", "The electricity is off today.", "-dad se convierte en -ty; la «c» suena «s»."),
+    Cognate("Curiosity", "Curiosidad", "dad", "kiu-ri-Ó-si-ti", "Curiosity helps you learn.", "-dad se convierte en -ty."),
+    Cognate("Exactly", "Exactamente", "mente", "ig-ZÁKT-li", "That is exactly right.", "-mente se convierte en -ly."),
+    Cognate("Completely", "Completamente", "mente", "kom-PLÍT-li", "I completely agree.", "-mente se convierte en -ly."),
+    Cognate("Dangerous", "Peligroso", "oso", "DÉIN-ye-ros", "That street is dangerous at night.", "-oso se convierte en -ous; la «g» suena «y»."),
+    Cognate("Numerous", "Numeroso", "oso", "NÚ-me-ros", "Numerous people came to the park.", "-oso se convierte en -ous."),
+    Cognate("Sensible", "Sensato", "falsos", "SÉN-si-bol", "Be sensible and rest today.", "¡Trampa! NO significa «sensible» (emocional); eso es «sensitive»."),
+    Cognate("Rope", "Cuerda", "falsos", "RÓUP", "Hold the rope with both hands.", "¡Trampa! NO significa «ropa»; eso es «clothes»."),
+    Cognate("Parents", "Padres", "falsos", "PÉ-rents", "My parents live in Tampa.", "¡Trampa! NO son tus «parientes» en general; eso es «relatives».")
 )
 
 val RULES: List<RuleInfo> = listOf(
@@ -591,6 +605,34 @@ val CONVERSATIONS: List<Conversation> = listOf(
             ConvOption("That is all, thank you. The check, please.", true, "conversation_turn"),
             ConvOption("That all is. Check the please.", false, "syntax_word_order"),
             ConvOption("Nothing more, checks please.", false, "syntax_word_order")), "«That is all» cierra con elegancia; «the check» pide la cuenta.")
+    )),
+    Conversation("farmacia", "En la farmacia", "Postal · Salud", listOf(
+        ConvTurn("La farmacéutica", "Good morning! How can I help you?", listOf(
+            ConvOption("I need something for a headache, please.", true, "conversation_turn"),
+            ConvOption("I headache have pain much.", false, "syntax_word_order"),
+            ConvOption("Me duele la cabeza mucho ayer.", false, "conversation_turn")), "Pide medicina con «I need…»: sencillo y directo."),
+        ConvTurn("La farmacéutica", "Do you have a prescription?", listOf(
+            ConvOption("No, I do not. It is just a headache.", true, "conversation_turn"),
+            ConvOption("No, prescription I no have.", false, "syntax_word_order"),
+            ConvOption("Yes, I do not yesterday.", false, "conversation_turn")), "Respuesta completa: «No, I do not» + la explicación."),
+        ConvTurn("La farmacéutica", "These pills work well. Anything else?", listOf(
+            ConvOption("Just the pills, thank you.", true, "conversation_turn"),
+            ConvOption("Only pills, thanks you very.", false, "conversation_turn"),
+            ConvOption("Nothing pills more now.", false, "syntax_word_order")), "«Just the pills» = solo las pastillas, nada más.")
+    )),
+    Conversation("banco", "En el banco", "Postal · Ciudad", listOf(
+        ConvTurn("El cajero", "Good afternoon! What can I do for you?", listOf(
+            ConvOption("I would like to open an account, please.", true, "conversation_turn"),
+            ConvOption("I account open new want.", false, "syntax_word_order"),
+            ConvOption("Quiero abrir una cuenta aquí.", false, "conversation_turn")), "«I would like to…» también abre cuentas: la fórmula cortés sirve en todas partes."),
+        ConvTurn("El cajero", "Do you have your passport with you?", listOf(
+            ConvOption("Yes, here it is.", true, "conversation_turn"),
+            ConvOption("Passport mine here is it.", false, "syntax_word_order"),
+            ConvOption("No, only a banana.", false, "conversation_turn")), "«Here it is» = aquí está: la frase para entregar un documento."),
+        ConvTurn("El cajero", "Perfect. Anything else today?", listOf(
+            ConvOption("That is all, thank you very much.", true, "conversation_turn"),
+            ConvOption("Finish all, thanks very.", false, "conversation_turn"),
+            ConvOption("More things no today.", false, "syntax_word_order")), "El cierre de siempre: «That is all, thank you».")
     ))
 )
 
@@ -732,6 +774,34 @@ val LAB_SETS: List<LabSet> = listOf(
             LabItem("Thank you very much", "muchas gracias", "TH soplada al arrancar y ritmo de vals: «THANK-iu VER-i mach».", "El soplido inicial y el golpe en very."),
             LabItem("Excuse me", "perdón / disculpe", "«Ex-KIUS-mi»: el golpe va en la segunda sílaba.", "Acento en -cuse, no al principio."),
             LabItem("How's it going?", "¿qué tal?", "Cuatro palabras, un solo río: «jaus-it-GOU-in».", "Todo pegado, subiendo al final como pregunta.")
+        )
+    ),
+    LabSet(
+        id = "pares2",
+        title = "Pares que se confunden II",
+        focusEs = "Segunda ronda de pares mínimos: la «a» abierta y amplia contra la «e» breve y relajada, y la «i» corta contra la larga otra vez. Si se confunden, cambia el significado entero.",
+        patternKey = null,
+        items = listOf(
+            LabItem("bad", "malo", "Mandíbula bien abierta, como en «cat»: una «a» amplia, «baaad».", "La a abierta y corta: «bad»."),
+            LabItem("bed", "cama", "Boca casi cerrada, «e» breve y relajada: «bed».", "Una e corta, sin abrir: «bed»."),
+            LabItem("man", "hombre", "La misma a abierta de bad: «maaan», mandíbula suelta.", "a abierta: «man»."),
+            LabItem("men", "hombres", "La e breve de bed, sin abrir la mandíbula.", "e breve: «men», no «man»."),
+            LabItem("live", "vivir", "La i breve y seca de ship: «liv», sin sonreír.", "i corta: «live» (el verbo)."),
+            LabItem("leave", "irse / salir", "Sonríe y estira la ii larga de sheep: «liiiv».", "ii larga y clara: «leave».")
+        )
+    ),
+    LabSet(
+        id = "h",
+        title = "La «h»: suena o se calla",
+        focusEs = "La «h» inglesa tiene dos caras: en house o hello se oye un soplo suave; en hour, honest y honor no suena nada. Marcar la diferencia evita los dos errores.",
+        patternKey = null,
+        items = listOf(
+            LabItem("house", "casa", "Sopla la «h» como un suspiro con sonido: «hhh-aus». En esta palabra la h SÍ suena.", "Un soplo claro al principio: «house»."),
+            LabItem("hello", "hola", "El mismo soplo: «hhh-e-lou». Nada de empezar en la e.", "Soplo inicial: «hello»."),
+            LabItem("happy", "feliz", "Soplo y sonrisa: «hhh-á-pi».", "La h suena: «happy»."),
+            LabItem("hour", "hora", "Aquí la h se calla: la palabra empieza en la vocal, «aur». Escrita con h, oída sin ella.", "Empieza en vocal: «hour», sin soplo."),
+            LabItem("honest", "honesto", "También muda: «ó-nest», como si la h no existiera.", "Sin soplo: «honest»."),
+            LabItem("honor", "honor", "La h se calla igual que en hour y honest: «ó-nor».", "Empieza en la o: «honor».")
         )
     )
 )
