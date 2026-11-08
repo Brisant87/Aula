@@ -8,7 +8,7 @@ package com.aula.nativeapp
  * silently on any phone, needs no key and no network. Dynamic
  * text (teacher briefings, read-backs) has no entry and falls
  * through to the cloud voice, then the device voice.
- * 327 clips. Generated from CLIP-MANIFEST.csv — do not edit by hand.
+ * 352 clips. Generated from CLIP-MANIFEST.csv — do not edit by hand.
  */
 object BundledClips {
 
@@ -340,6 +340,31 @@ object BundledClips {
         "Yesterday we played soccer" to "voice/syntax_yesterday_we_played_soccer.mp3",
         "Hello! I am your teacher. Let's practice English together." to "voice/teacher_hello_i_am_your_teacher_let_s_practice_engli.mp3",
         "Hello! I am your teacher. Let's start today's lesson." to "voice/teacher_hello_i_am_your_teacher_let_s_start_today_s.mp3",
+        "beach" to "voice/v_lab_beach.mp3",
+        "sit" to "voice/v_lab_sit.mp3",
+        "seat" to "voice/v_lab_seat.mp3",
+        "full" to "voice/v_lab_full.mp3",
+        "salad" to "voice/v_lab_salad.mp3",
+        "soccer" to "voice/v_lab_soccer.mp3",
+        "store" to "voice/v_lab_store.mp3",
+        "school" to "voice/v_lab_school.mp3",
+        "speak" to "voice/v_lab_speak.mp3",
+        "this" to "voice/v_lab_this.mp3",
+        "mother" to "voice/v_lab_mother.mp3",
+        "thank" to "voice/v_lab_thank.mp3",
+        "brother" to "voice/v_lab_brother.mp3",
+        "walked" to "voice/v_lab_walked.mp3",
+        "played" to "voice/v_lab_played.mp3",
+        "wanted" to "voice/v_lab_wanted.mp3",
+        "watched" to "voice/v_lab_watched.mp3",
+        "cleaned" to "voice/v_lab_cleaned.mp3",
+        "started" to "voice/v_lab_started.mp3",
+        "I don't know" to "voice/v_lab_i_don_t_know.mp3",
+        "Let me see" to "voice/v_lab_let_me_see.mp3",
+        "See you tomorrow" to "voice/v_lab_see_you_tomorrow.mp3",
+        "Thank you very much" to "voice/v_lab_thank_you_very_much.mp3",
+        "Excuse me" to "voice/v_lab_excuse_me.mp3",
+        "How's it going?" to "voice/v_lab_how_s_it_going.mp3",
     )
 
     fun assetFor(text: String): String? = MAP[text.trim()]
