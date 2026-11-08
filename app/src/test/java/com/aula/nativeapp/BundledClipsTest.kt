@@ -41,13 +41,16 @@ class BundledClipsTest {
                 assertClip(item.words.joinToString(" "), "transfer ${item.id}")
             }
         }
+        for (set in LAB_SETS) {
+            for (item in set.items) assertClip(item.text, "lab ${set.id}")
+        }
         assertClip("Hello! I am your teacher. Let's start today's lesson.", "teacher greeting")
         assertClip("Hello! I am your teacher. Let's practice English together.", "teacher greeting")
     }
 
     @Test
     fun `clip map is complete and well formed`() {
-        assertEquals(327, BundledClips.size)
+        assertEquals(352, BundledClips.size)
         val paths = BundledClips.assetPaths()
         assertEquals(BundledClips.size, paths.size) // no two texts share a file
         for (p in paths) {
