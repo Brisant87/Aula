@@ -62,6 +62,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -87,8 +89,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -109,43 +114,74 @@ import kotlin.math.ceil
 
 // ------------------------------------------------------------------ theme
 
-private val Sand = Color(0xFFF5EDDC)
-private val Cream = Color(0xFFFBF7EC)
-private val Terracotta = Color(0xFFC05B2E)
-private val TerracottaDeep = Color(0xFFA34A24)
-private val Olive = Color(0xFF66713F)
-private val OliveDeep = Color(0xFF4E5A30)
-private val Ink = Color(0xFF2C2620)
-private val JournalLine = Color(0xFFD9C9A8)
-private val GoodBg = Color(0xFFE7EDD8)
-private val BadBg = Color(0xFFF7E3D5)
+// Modern refresh (2026-11-08): same Mediterranean Journal family —
+// terracotta, olive, sand — deepened and cleaned up, with soft
+// container tones and an ochre accent for the Material 3 scheme.
+private val Sand = Color(0xFFF3EBD8)
+private val Cream = Color(0xFFFCF9F1)
+private val Terracotta = Color(0xFFBC5325)
+private val TerracottaDeep = Color(0xFF8F3B18)
+private val TerracottaSoft = Color(0xFFF7E0CF)
+private val Olive = Color(0xFF5E6B34)
+private val OliveDeep = Color(0xFF44512A)
+private val OliveSoft = Color(0xFFE6EBD2)
+private val Ochre = Color(0xFFB07D2B)
+private val OchreSoft = Color(0xFFF3E3BC)
+private val OchreDeep = Color(0xFF5C4310)
+private val Ink = Color(0xFF28211B)
+private val JournalLine = Color(0xFFDCCBA6)
+private val GoodBg = Color(0xFFE4ECD2)
+private val BadBg = Color(0xFFF9E4D4)
 
 @Composable
 fun AulaTheme(content: @Composable () -> Unit) {
     val scheme = lightColorScheme(
         primary = Terracotta,
         onPrimary = Cream,
+        primaryContainer = TerracottaSoft,
+        onPrimaryContainer = TerracottaDeep,
         secondary = Olive,
         onSecondary = Cream,
+        secondaryContainer = OliveSoft,
+        onSecondaryContainer = OliveDeep,
+        tertiary = Ochre,
+        onTertiary = Cream,
+        tertiaryContainer = OchreSoft,
+        onTertiaryContainer = OchreDeep,
         background = Sand,
         onBackground = Ink,
         surface = Cream,
         onSurface = Ink,
-        surfaceVariant = Sand,
-        onSurfaceVariant = Ink
+        surfaceVariant = Color(0xFFEADFC6),
+        onSurfaceVariant = Ink,
+        outline = Color(0xFFC4AE7F),
+        outlineVariant = JournalLine
     )
+    // Modern editorial pairing: serif display for titles (the journal
+    // voice), clean sans for body and labels (the modern readability).
     val serif = FontFamily.Serif
+    val sans = FontFamily.SansSerif
     val type = Typography(
-        headlineMedium = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 26.sp),
-        headlineSmall = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 21.sp),
-        titleLarge = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 20.sp),
-        titleMedium = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 17.sp),
-        bodyLarge = TextStyle(fontFamily = serif, fontSize = 16.sp, lineHeight = 23.sp),
-        bodyMedium = TextStyle(fontFamily = serif, fontSize = 15.sp, lineHeight = 21.sp),
-        bodySmall = TextStyle(fontFamily = serif, fontSize = 13.sp, lineHeight = 18.sp),
-        labelLarge = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        headlineLarge = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 36.sp),
+        headlineMedium = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 27.sp, lineHeight = 33.sp),
+        headlineSmall = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp),
+        titleLarge = TextStyle(fontFamily = serif, fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 27.sp),
+        titleMedium = TextStyle(fontFamily = serif, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 23.sp),
+        bodyLarge = TextStyle(fontFamily = sans, fontSize = 16.sp, lineHeight = 24.sp),
+        bodyMedium = TextStyle(fontFamily = sans, fontSize = 15.sp, lineHeight = 22.sp),
+        bodySmall = TextStyle(fontFamily = sans, fontSize = 13.sp, lineHeight = 19.sp),
+        labelLarge = TextStyle(fontFamily = sans, fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
+        labelMedium = TextStyle(fontFamily = sans, fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
+        labelSmall = TextStyle(fontFamily = sans, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.8.sp)
     )
-    MaterialTheme(colorScheme = scheme, typography = type, content = content)
+    val shapes = Shapes(
+        extraSmall = RoundedCornerShape(8.dp),
+        small = RoundedCornerShape(12.dp),
+        medium = RoundedCornerShape(16.dp),
+        large = RoundedCornerShape(20.dp),
+        extraLarge = RoundedCornerShape(28.dp)
+    )
+    MaterialTheme(colorScheme = scheme, typography = type, shapes = shapes, content = content)
 }
 
 // ------------------------------------------------------------------ activity
@@ -205,7 +241,12 @@ fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager, voiceK
                             tts.stop()
                         },
                         icon = { Text(t.icon, fontSize = 17.sp) },
-                        label = { Text(t.label, fontSize = 10.sp) }
+                        label = { Text(t.label, fontSize = 10.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedTextColor = TerracottaDeep,
+                            indicatorColor = TerracottaSoft,
+                            unselectedTextColor = Ink.copy(alpha = 0.6f)
+                        )
                     )
                 }
             }
@@ -241,8 +282,8 @@ fun Stamp(text: String, olive: Boolean = false) {
         style = MaterialTheme.typography.labelSmall,
         color = if (olive) OliveDeep else TerracottaDeep,
         modifier = Modifier
-            .border(1.dp, if (olive) Olive else Terracotta, RoundedCornerShape(3.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .border(1.dp, if (olive) Olive else Terracotta, RoundedCornerShape(10.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
     )
 }
 
@@ -253,13 +294,13 @@ fun JournalCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (oliveCard) Color(0xFFF1EEDC) else Cream
+            containerColor = if (oliveCard) Color(0xFFEEF0DB) else Cream
         ),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, JournalLine),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(16.dp), content = content)
+        Column(Modifier.padding(20.dp), content = content)
     }
 }
 
@@ -276,9 +317,9 @@ fun FeedbackBox(text: String, good: Boolean) {
     Box(
         Modifier
             .fillMaxWidth()
-            .background(if (good) GoodBg else BadBg, RoundedCornerShape(8.dp))
-            .border(1.dp, if (good) Olive else Terracotta, RoundedCornerShape(8.dp))
-            .padding(12.dp)
+            .background(if (good) GoodBg else BadBg, RoundedCornerShape(16.dp))
+            .border(1.dp, if (good) Olive else Terracotta, RoundedCornerShape(16.dp))
+            .padding(14.dp)
     ) {
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }
@@ -337,7 +378,7 @@ fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
     }
     OutlinedButton(
         onClick = onClick,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, if (state == 1) Olive else if (state == 2) Terracotta else JournalLine),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = fg, containerColor = bg),
         modifier = Modifier
@@ -354,7 +395,7 @@ fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Mod
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (olive) Olive else Terracotta,
             contentColor = Cream
@@ -369,7 +410,7 @@ fun GhostButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, TerracottaDeep),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TerracottaDeep, containerColor = Cream)
     ) {
@@ -759,6 +800,32 @@ fun MouthFigure(shapeKey: String, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A guide word with its silent letters faded (Build H — the
+ * ghosting lesson from Cognata's phonetic cards): what is written
+ * but never pronounced reads at a whisper, so the eye learns what
+ * the ear should ignore.
+ */
+@Composable
+fun GhostedWordText(word: String, suffix: String) {
+    val silent = SILENT_LETTERS[word.lowercase()]
+    if (silent == null) {
+        Text("$word  $suffix", style = MaterialTheme.typography.titleLarge)
+        return
+    }
+    val annotated = buildAnnotatedString {
+        word.forEachIndexed { i, c ->
+            if (i in silent) {
+                withStyle(SpanStyle(color = Ink.copy(alpha = 0.30f))) { append(c) }
+            } else {
+                append(c)
+            }
+        }
+        append("  $suffix")
+    }
+    Text(annotated, style = MaterialTheme.typography.titleLarge)
+}
+
 @Composable
 fun GuideCard(
     wordKey: String,
@@ -1106,10 +1173,11 @@ fun GuideCard(
     JournalCard {
         Stamp("La Guía · Mira · Escucha · Copia")
         Spacer(Modifier.height(8.dp))
-        Text(
-            "${gw.word}  ${gw.ipa} · ${gw.es}",
-            style = MaterialTheme.typography.titleLarge
-        )
+        GhostedWordText(gw.word, "${gw.ipa} · ${gw.es}")
+        if (SILENT_LETTERS.containsKey(gw.word.lowercase())) {
+            Spacer(Modifier.height(2.dp))
+            NoteText("Las letras apagadas se escriben, pero no suenan.")
+        }
         Spacer(Modifier.height(8.dp))
         MouthFigure(gw.steps[step].shape)
         Spacer(Modifier.height(6.dp))
@@ -1892,6 +1960,18 @@ fun EspejoScreen(
     var practiceStage by remember { mutableStateOf(0) } // 0 = mini-clase, 1 = prueba
     var miniIndex by remember { mutableStateOf(0) }
     var retentionKey by remember { mutableStateOf<String?>(null) }
+    var showMonth by remember { mutableStateOf(false) }
+
+    if (showMonth) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            MonthScreen(store, onBack = { showMonth = false })
+        }
+        return
+    }
 
     Column(
         Modifier
@@ -1900,6 +1980,18 @@ fun EspejoScreen(
             .padding(16.dp)
     ) {
         ViewTitle("Espejo", "Esto es lo que veo en tu trabajo — evidencia primero, etiquetas después.")
+        if (store.events.isNotEmpty()) {
+            JournalCard {
+                Stamp("Tu diario")
+                Spacer(Modifier.height(8.dp))
+                Text("Tu mes en el diario", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(4.dp))
+                Text("El resumen del mes en una página: días de práctica, lo que se movió y tu foco para el mes que viene.")
+                Spacer(Modifier.height(10.dp))
+                PrimaryButton("Leer mi mes →", olive = true) { showMonth = true }
+            }
+            Spacer(Modifier.height(14.dp))
+        }
 
         val pk = practiceKey
         if (pk != null) {
@@ -2320,8 +2412,20 @@ fun BibliotecaScreen(
     var wordKey by remember { mutableStateOf<String?>(null) }
     var ruleKey by remember { mutableStateOf<String?>(null) }
     var ruleQ by remember { mutableStateOf<Cognate?>(null) }
+    var showLab by remember { mutableStateOf(false) }
     val di = remember { Dates.dayIndex() }
     val dayWord = remember { COGNATES[di % COGNATES.size] }
+
+    if (showLab) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            LabScreen(store, tts, bump, onBack = { showLab = false })
+        }
+        return
+    }
 
     Column(
         Modifier
@@ -2330,6 +2434,15 @@ fun BibliotecaScreen(
             .padding(16.dp)
     ) {
         ViewTitle("Biblioteca", "Tu estantería: la Guía, las palabras puente y las fórmulas que abren el inglés.")
+
+        JournalCard {
+            Stamp("El Laboratorio de la profesora")
+            Spacer(Modifier.height(8.dp))
+            Text("Series cortas de pronunciación: pares que se confunden, el sonido TH, los finales -ed y frases que se pegan — cada pieza con su toma medida y un solo arreglo.")
+            Spacer(Modifier.height(10.dp))
+            PrimaryButton("Entrar al Laboratorio →", olive = true) { showLab = true }
+        }
+        Spacer(Modifier.height(14.dp))
 
         JournalCard(oliveCard = true) {
             Stamp("Palabra del día")
@@ -2457,6 +2570,12 @@ fun CaminoScreen(
     var before by remember { mutableStateOf(0) }
     var finished by remember { mutableStateOf<Boolean?>(null) }
     var finishScore by remember { mutableStateOf(0) }
+    var showFinal by remember { mutableStateOf(false) }
+
+    if (showFinal) {
+        FinalExamScreen(store, settings, tts, bump, onExit = { showFinal = false })
+        return
+    }
 
     fun unlocked(idx: Int): Boolean = idx == 0 || store.camino.contains(LEVELS[idx - 1].id)
 
@@ -2538,6 +2657,27 @@ fun CaminoScreen(
                             finished = null
                         }
                     }
+                }
+                Spacer(Modifier.height(14.dp))
+            }
+            if (LEVELS.all { store.camino.contains(it.id) }) {
+                val fin = store.camino["final"]
+                JournalCard(oliveCard = true) {
+                    Stamp("🎓 La Gran Prueba")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        if (fin != null) {
+                            "Constancia ganada: " + fin.score + " de 10, el " + fin.date + ". Puedes repetirla cuando quieras: tu constancia guarda tu mejor nota."
+                        } else {
+                            "Los cuatro niveles son tuyos. Queda la última página del Camino: diez piezas nuevas de todo el curso, en una sola sentada. Con 7 de 10, tu constancia queda en el diario."
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    PrimaryButton(
+                        if (fin != null) "Repetir la Gran Prueba →" else "Hacer la Gran Prueba →",
+                        olive = true
+                    ) { showFinal = true }
                 }
                 Spacer(Modifier.height(14.dp))
             }
@@ -3035,7 +3175,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.12", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.13", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
             Spacer(Modifier.height(6.dp))
