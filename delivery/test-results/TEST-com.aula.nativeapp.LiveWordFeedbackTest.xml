@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LiveWordFeedbackTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-08T22:00:03.205Z" hostname="runnervmwuk1x" time="0.006">
+<testsuite name="com.aula.nativeapp.LiveWordFeedbackTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-08T22:47:29.347Z" hostname="runnervmwuk1x" time="0.008">
   <properties/>
   <testcase name="a replaced word is marked wrong-or-missing" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
   <testcase name="a trap-form alternative marks the word suspect even when the top hypothesis is clean" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
   <testcase name="the weakest-word pick prefers a suspect over a missing word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
-  <testcase name="the trap form in the scored transcript marks the word suspect" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
-  <testcase name="an unrelated alternative does not incriminate a clean word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
+  <testcase name="the trap form in the scored transcript marks the word suspect" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
+  <testcase name="an unrelated alternative does not incriminate a clean word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.002"/>
   <testcase name="suspect scoring uses the trap form score, not the cleaned top score" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
-  <testcase name="the weakest-word pick prefers a content word over a function word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
+  <testcase name="the weakest-word pick prefers a content word over a function word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
   <testcase name="a known trap word with no evidence is never marked suspect" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
-  <testcase name="the sh gate - ship is never a phantom-E suspect" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
-  <testcase name="a clean reply marks every word OK and has no weakest word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
-  <testcase name="a missing word is marked wrong-or-missing and becomes the weakest word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
+  <testcase name="the sh gate - ship is never a phantom-E suspect" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
+  <testcase name="a clean reply marks every word OK and has no weakest word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.0"/>
+  <testcase name="a missing word is marked wrong-or-missing and becomes the weakest word" classname="com.aula.nativeapp.LiveWordFeedbackTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
