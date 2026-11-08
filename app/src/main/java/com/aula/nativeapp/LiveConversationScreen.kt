@@ -111,13 +111,13 @@ import androidx.core.content.ContextCompat
  * session simply restarts — a clean reset, never a half-restored chat.
  */
 
-private val LiveTerracottaDeep = Color(0xFFA34A24)
-private val LiveOlive = Color(0xFF66713F)
-private val LiveOliveDeep = Color(0xFF4E5A30)
-private val LiveInk = Color(0xFF2C2620)
-private val LiveLine = Color(0xFFD9C9A8)
-private val LiveGoodBg = Color(0xFFE7EDD8)
-private val LiveBadBg = Color(0xFFF7E3D5)
+private val LiveTerracottaDeep = Color(0xFF8F3B18)
+private val LiveOlive = Color(0xFF5E6B34)
+private val LiveOliveDeep = Color(0xFF44512A)
+private val LiveInk = Color(0xFF28211B)
+private val LiveLine = Color(0xFFDCCBA6)
+private val LiveGoodBg = Color(0xFFE4ECD2)
+private val LiveBadBg = Color(0xFFF9E4D4)
 
 /** Mouth shape for the practice card: the Guide's own steps when the word is a guide word. */
 private fun mouthShapeFor(word: String): String {
@@ -538,7 +538,7 @@ fun LiveConversationScreen(
                         .background(
                             when {
                                 i < state.exchangesDone -> LiveOlive
-                                i == state.exchangesDone && !state.isFinished -> Color(0xFFC05B2E)
+                                i == state.exchangesDone && !state.isFinished -> Color(0xFFBC5325)
                                 else -> LiveLine
                             },
                             CircleShape
@@ -745,12 +745,12 @@ private fun LearnerExchangeBlock(
                 Modifier
                     .background(
                         if (score >= 60) LiveGoodBg else LiveBadBg,
-                        RoundedCornerShape(6.dp)
+                        RoundedCornerShape(10.dp)
                     )
                     .border(
                         1.dp,
-                        if (score >= 85) LiveOlive else Color(0xFFC05B2E),
-                        RoundedCornerShape(6.dp)
+                        if (score >= 85) LiveOlive else Color(0xFFBC5325),
+                        RoundedCornerShape(10.dp)
                     )
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
