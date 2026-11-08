@@ -20,7 +20,7 @@ import org.junit.Test
  */
 class LiveConversationEngineTest {
 
-    private val bankIds = listOf("cafe", "ayer", "hotel", "mercado", "trabajo", "direcciones", "medico", "aeropuerto", "restaurante")
+    private val bankIds = listOf("cafe", "ayer", "hotel", "mercado", "trabajo", "direcciones", "medico", "aeropuerto", "restaurante", "farmacia", "banco")
 
     @Test
     fun `every conversation has a complete live bank and the opening reuses the guided first line`() {
