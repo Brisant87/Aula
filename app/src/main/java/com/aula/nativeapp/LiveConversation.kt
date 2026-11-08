@@ -608,17 +608,16 @@ object LiveConversationEngine {
 // ------------------------------------------------------------------ the banks
 
 /**
- * The Conversación en vivo content banks — one per existing Aula
- * conversation (Data.kt CONVERSATIONS: "cafe", "ayer", "hotel" — all
- * three of Aula native's conversations are covered; the web app's
- * wider set does not exist in this native build, so there is nothing
- * else to cover).
+ * The Conversación en vivo content banks — one per conversation in
+ * Data.kt CONVERSATIONS (eleven since v0.15 added "farmacia" and
+ * "banco" with full banks of their own; the test suites pin that
+ * every guided conversation has a complete bank).
  *
  * Authoring rules, so the flow engine stays honest:
  *  - each OPENING reuses the guided scene's first partner line
- *    verbatim (Aula has no bundled clips, so the reuse is for persona
- *    and wording continuity, and its model replies extend the guided
- *    scene's own correct option);
+ *    verbatim (persona and wording continuity, and the opening line
+ *    shares the guided scene's bundled clip; its model replies extend
+ *    the guided scene's own correct option);
  *  - branch triggers are words the LEARNER plausibly says about that
  *    topic (reply vocabulary), never words only the partner would
  *    say — a branch is served because the transcript earned it;
@@ -642,6 +641,8 @@ object LiveConversationBanks {
         "medico" -> medico
         "aeropuerto" -> aeropuerto
         "restaurante" -> restaurante
+        "farmacia" -> farmacia
+        "banco" -> banco
         else -> null
     }
 
@@ -2036,6 +2037,313 @@ object LiveConversationBanks {
             )
         ),
         wrapUpLine = "Thank you for dining with us. Have a wonderful evening!"
+    )
+
+    // ---------------------------------------------------------- en la farmacia
+
+    private val farmacia = LiveBank(
+        conversationId = "farmacia",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good morning! How can I help you?",
+            objectiveEs = "Pide algo para un dolor: «I need something for…».",
+            modelReplies = listOf(
+                "I need something for a headache, please.",
+                "I need medicine for a cold, please."
+            ),
+            targetKeywords = listOf("need", "headache", "medicine", "please"),
+            clarityTipEs = "«I need» + lo que buscas: la fórmula de la farmacia.",
+            trapWords = listOf("something")
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_cold",
+                    partnerLine = "For a cold, this syrup works well. Do you have a cough too?",
+                    objectiveEs = "Cuenta tus síntomas: tos, resfriado o garganta irritada.",
+                    modelReplies = listOf(
+                        "Yes, I have a cough and a sore throat.",
+                        "No, just a cold, thank you."
+                    ),
+                    targetKeywords = listOf("cough", "throat", "cold"),
+                    clarityTipEs = "«Sore throat» = garganta irritada; «sore» arranca con /s/ directa.",
+                    trapNotesEs = listOf("Ojo con la «e» fantasma: «sore» y «syrup» arrancan con /s/ directa, sin vocal antes."),
+                    trapWords = listOf("sore", "syrup")
+                ),
+                triggerKeywords = listOf("cold", "cough", "flu", "sick")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_dose",
+                    partnerLine = "Take two pills a day, with food. Is that clear?",
+                    objectiveEs = "Confirma la dosis: dos pastillas al día, con comida.",
+                    modelReplies = listOf(
+                        "Yes, two pills a day. Thank you.",
+                        "Two a day, with food. I understand."
+                    ),
+                    targetKeywords = listOf("two", "pills", "day"),
+                    clarityTipEs = "Repetir la dosis en voz alta la fija en la memoria."
+                ),
+                triggerKeywords = listOf("many", "often", "dose", "times", "day")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_kids",
+                    partnerLine = "Is the medicine for you, or for a child?",
+                    objectiveEs = "Aclara para quién es la medicina.",
+                    modelReplies = listOf(
+                        "It is for my daughter.",
+                        "For me, thank you."
+                    ),
+                    targetKeywords = listOf("daughter", "child", "me"),
+                    clarityTipEs = "«For my daughter» — la medicina infantil es distinta."
+                ),
+                triggerKeywords = listOf("child", "daughter", "son", "kid", "baby")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_allergy",
+                    partnerLine = "Are you allergic to any medicine?",
+                    objectiveEs = "Responde sobre alergias: sí o no, con claridad.",
+                    modelReplies = listOf(
+                        "No, I am not allergic.",
+                        "Yes, I am allergic to aspirin."
+                    ),
+                    targetKeywords = listOf("allergic", "aspirin", "not"),
+                    clarityTipEs = "Pregunta de seguridad: responde completo y sin bromas."
+                ),
+                triggerKeywords = listOf("allergic", "allergy", "aspirin")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_price",
+                    partnerLine = "The total is eight dollars. Do you need a bag?",
+                    objectiveEs = "Cierra la compra: decide la bolsa y despídete.",
+                    modelReplies = listOf(
+                        "No bag, thank you. Here is my card.",
+                        "Yes, a bag, please."
+                    ),
+                    targetKeywords = listOf("bag", "card", "thank"),
+                    clarityTipEs = "«No bag, thank you» — corto y cortés."
+                ),
+                triggerKeywords = listOf("much", "cost", "price", "pay", "bag", "total")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_cream",
+                    partnerLine = "We also have a good cream for sore muscles. Would you like to see it?",
+                    objectiveEs = "Acepta o rechaza la crema para los músculos cansados.",
+                    modelReplies = listOf(
+                        "Yes, please. My back hurts.",
+                        "No, thank you. Just the pills."
+                    ),
+                    targetKeywords = listOf("cream", "back", "pills"),
+                    clarityTipEs = "«My back hurts» = me duele la espalda.",
+                    trapWords = listOf("sore")
+                ),
+                triggerKeywords = listOf("back", "muscles", "cream", "hurt", "pain")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_water",
+                partnerLine = "Would you like a glass of water for the first pill?",
+                objectiveEs = "Acepta o rechaza el vaso de agua para la primera pastilla.",
+                modelReplies = listOf(
+                    "Yes, thank you. That is kind.",
+                    "No, thank you. I have water."
+                ),
+                targetKeywords = listOf("water", "thank", "yes"),
+                clarityTipEs = "Tomar la primera pastilla ahí mismo es lo normal."
+            ),
+            LivePrompt(
+                id = "g_rest",
+                partnerLine = "Rest is part of the medicine. Can you rest today?",
+                objectiveEs = "Di si hoy puedes descansar.",
+                modelReplies = listOf(
+                    "Yes, I can rest today.",
+                    "A little. I work this afternoon."
+                ),
+                targetKeywords = listOf("rest", "today", "work"),
+                clarityTipEs = "«Rest» también es verbo: descansar."
+            ),
+            LivePrompt(
+                id = "g_doctor",
+                partnerLine = "If the pain continues tomorrow, please see a doctor.",
+                objectiveEs = "Muestra que entiendes el consejo.",
+                modelReplies = listOf(
+                    "I understand. Thank you.",
+                    "Yes, I will see a doctor tomorrow."
+                ),
+                targetKeywords = listOf("doctor", "tomorrow", "understand"),
+                clarityTipEs = "Consejo serio: «see a doctor» = ir al médico."
+            ),
+            LivePrompt(
+                id = "g_bye",
+                partnerLine = "Anything else before you go?",
+                objectiveEs = "Cierra la visita a la farmacia.",
+                modelReplies = listOf(
+                    "That is all, thank you.",
+                    "Just this, thank you."
+                ),
+                targetKeywords = listOf("all", "thank"),
+                clarityTipEs = "El cierre de siempre: «That is all»."
+            )
+        ),
+        wrapUpLine = "Take care, get some rest, and feel better soon!"
+    )
+
+    // ---------------------------------------------------------- en el banco
+
+    private val banco = LiveBank(
+        conversationId = "banco",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good afternoon! What can I do for you?",
+            objectiveEs = "Di que quieres abrir una cuenta: «I would like to open an account».",
+            modelReplies = listOf(
+                "I would like to open an account, please.",
+                "I would like to open a savings account, please."
+            ),
+            targetKeywords = listOf("would", "open", "account", "please"),
+            clarityTipEs = "La fórmula cortés «I would like to…» abre la conversación.",
+            trapWords = listOf("savings")
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_id",
+                    partnerLine = "Of course. May I see your passport or ID, please?",
+                    objectiveEs = "Entrega tu documento: «Here it is».",
+                    modelReplies = listOf(
+                        "Yes, here it is.",
+                        "Here is my passport."
+                    ),
+                    targetKeywords = listOf("here", "passport"),
+                    clarityTipEs = "«Here it is» al entregar: la misma frase de la escena guiada."
+                ),
+                triggerKeywords = listOf("passport", "id", "document")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_savings",
+                    partnerLine = "Would you like a savings account or a checking account?",
+                    objectiveEs = "Elige: cuenta de ahorros o cuenta corriente.",
+                    modelReplies = listOf(
+                        "A savings account, please.",
+                        "Checking, please. For my salary."
+                    ),
+                    targetKeywords = listOf("savings", "checking", "account"),
+                    clarityTipEs = "«Savings» = ahorros; «checking» = la cuenta del día a día.",
+                    trapWords = listOf("savings")
+                ),
+                triggerKeywords = listOf("savings", "checking", "save", "money")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_card",
+                    partnerLine = "Your card arrives in five days. Do you need checks too?",
+                    objectiveEs = "Responde sobre los cheques: sí o no.",
+                    modelReplies = listOf(
+                        "No checks, thank you. Just the card.",
+                        "Yes, a checkbook, please."
+                    ),
+                    targetKeywords = listOf("card", "checks", "thank"),
+                    clarityTipEs = "La tarjeta llega por correo: «arrives in five days»."
+                ),
+                triggerKeywords = listOf("card", "checks", "checkbook", "debit")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_deposit",
+                    partnerLine = "Would you like to deposit money today?",
+                    objectiveEs = "Di cuánto depositas, o que hoy no.",
+                    modelReplies = listOf(
+                        "Yes, two hundred dollars, please.",
+                        "Not today, thank you."
+                    ),
+                    targetKeywords = listOf("deposit", "dollars", "today"),
+                    clarityTipEs = "«Deposit» es verbo y sustantivo: depositar, el depósito."
+                ),
+                triggerKeywords = listOf("deposit", "cash", "money", "dollars")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_hours",
+                    partnerLine = "We close at five today. Is there anything urgent?",
+                    objectiveEs = "Confirma que todo está hecho antes del cierre.",
+                    modelReplies = listOf(
+                        "No, everything is done. Thank you.",
+                        "Just one question about the app."
+                    ),
+                    targetKeywords = listOf("everything", "done", "question"),
+                    clarityTipEs = "«Everything is done» = está todo hecho."
+                ),
+                triggerKeywords = listOf("hours", "close", "open", "late", "time")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_app",
+                    partnerLine = "You can use our app to check your money any time.",
+                    objectiveEs = "Responde sobre la app del banco.",
+                    modelReplies = listOf(
+                        "Great, I will download it.",
+                        "I prefer paper, thank you."
+                    ),
+                    targetKeywords = listOf("download", "app", "paper"),
+                    clarityTipEs = "«Check your money» = revisar tu saldo."
+                ),
+                triggerKeywords = listOf("app", "phone", "online", "download")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_wait",
+                partnerLine = "Please have a seat. I will call your number soon.",
+                objectiveEs = "Acepta esperar tu turno sentado.",
+                modelReplies = listOf(
+                    "Thank you, I will wait.",
+                    "Okay, thank you."
+                ),
+                targetKeywords = listOf("wait", "thank", "seat"),
+                clarityTipEs = "«Have a seat» = tome asiento.",
+                trapWords = listOf("seat")
+            ),
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first account with us?",
+                objectiveEs = "Responde: ¿es tu primera cuenta en este banco?",
+                modelReplies = listOf(
+                    "Yes, it is my first account.",
+                    "No, I have an account in another city."
+                ),
+                targetKeywords = listOf("first", "account", "city"),
+                clarityTipEs = "Frase completa: «It is my first account»."
+            ),
+            LivePrompt(
+                id = "g_fee",
+                partnerLine = "There is no fee for this account.",
+                objectiveEs = "Valora que la cuenta no tenga cuota.",
+                modelReplies = listOf(
+                    "That is great, thank you.",
+                    "Perfect, no fee."
+                ),
+                targetKeywords = listOf("fee", "great", "thank"),
+                clarityTipEs = "«Fee» = cuota o comisión; aquí, ninguna."
+            ),
+            LivePrompt(
+                id = "g_else",
+                partnerLine = "Can I help you with anything else today?",
+                objectiveEs = "Cierra la visita al banco.",
+                modelReplies = listOf(
+                    "That is all, thank you very much.",
+                    "No, that is all."
+                ),
+                targetKeywords = listOf("all", "thank"),
+                clarityTipEs = "El cierre: «That is all, thank you»."
+            )
+        ),
+        wrapUpLine = "Your account is ready. Welcome to the bank, and have a nice day!"
     )
 
 }
