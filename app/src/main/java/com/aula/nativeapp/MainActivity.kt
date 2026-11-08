@@ -3177,7 +3177,7 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.14", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.15", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
             Spacer(Modifier.height(6.dp))
