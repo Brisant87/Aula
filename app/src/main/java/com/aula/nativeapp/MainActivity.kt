@@ -3177,11 +3177,15 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.13", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.14", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
             Spacer(Modifier.height(6.dp))
             NoteText("El oído propio: si el reconocedor del teléfono no transcribe nada, Aula puede escuchar tu grabación con su propio motor de voz, dentro del teléfono y sin internet. Cuando lo usa, te lo dice en la misma respuesta.")
+            Spacer(Modifier.height(6.dp))
+            Text("Créditos de código abierto", fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            NoteText("La transcripción de voz en el teléfono usa componentes de código abierto: sherpa-onnx (github.com/k2-fsa/sherpa-onnx), con licencia Apache 2.0; el modelo de voz en inglés incluido (sherpa-onnx-streaming-zipformer-en-2023-06-26), entrenado con icefall (Apache 2.0) con el corpus LibriSpeech (Panayotov et al., CC BY 4.0); y ONNX Runtime (Microsoft), con licencia MIT. Textos completos de las licencias: apache.org/licenses/LICENSE-2.0 y creativecommons.org/licenses/by/4.0/")
         }
     }
 
