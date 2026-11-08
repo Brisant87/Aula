@@ -351,3 +351,77 @@ Hello! I am your teacher. Let's start today's lesson.,voice/teacher_hello_i_am_y
 "Thank you very much","v_lab_thank_you_very_much.mp3","Helio (avocado_v2:MAI_03)","lab"
 "Excuse me","v_lab_excuse_me.mp3","Helio (avocado_v2:MAI_03)","lab"
 "How's it going?","v_lab_how_s_it_going.mp3","Helio (avocado_v2:MAI_03)","lab"
+Metal,voice/cog_metal.mp3,cog
+Plastic,voice/cog_plastic.mp3,cog
+Elephant,voice/cog_elephant.mp3,cog
+Invitation,voice/cog_invitation.mp3,cog
+Celebration,voice/cog_celebration.mp3,cog
+Electricity,voice/cog_electricity.mp3,cog
+Curiosity,voice/cog_curiosity.mp3,cog
+Exactly,voice/cog_exactly.mp3,cog
+Completely,voice/cog_completely.mp3,cog
+Dangerous,voice/cog_dangerous.mp3,cog
+Numerous,voice/cog_numerous.mp3,cog
+Sensible,voice/cog_sensible.mp3,cog
+Rope,voice/cog_rope.mp3,cog
+Parents,voice/cog_parents.mp3,cog
+"bad","v_lab_bad.mp3","Helio (avocado_v2:MAI_03)","lab"
+"man","v_lab_man.mp3","Helio (avocado_v2:MAI_03)","lab"
+"men","v_lab_men.mp3","Helio (avocado_v2:MAI_03)","lab"
+"live","v_lab_live.mp3","Helio (avocado_v2:MAI_03)","lab"
+"leave","v_lab_leave.mp3","Helio (avocado_v2:MAI_03)","lab"
+"house","v_lab_house.mp3","Helio (avocado_v2:MAI_03)","lab"
+"hello","v_lab_hello.mp3","Helio (avocado_v2:MAI_03)","lab"
+"happy","v_lab_happy.mp3","Helio (avocado_v2:MAI_03)","lab"
+"hour","v_lab_hour.mp3","Helio (avocado_v2:MAI_03)","lab"
+"honest","v_lab_honest.mp3","Helio (avocado_v2:MAI_03)","lab"
+"honor","v_lab_honor.mp3","Helio (avocado_v2:MAI_03)","lab"
+Good morning! How can I help you?,voice/conv_good_morning_how_can_i_help_you_farmacia.mp3,conv
+Do you have a prescription?,voice/conv_do_you_have_a_prescription.mp3,conv
+These pills work well. Anything else?,voice/conv_these_pills_work_well_anything_else.mp3,conv
+Good afternoon! What can I do for you?,voice/conv_good_afternoon_what_can_i_do_for_you.mp3,conv
+Do you have your passport with you?,voice/conv_do_you_have_your_passport_with_you.mp3,conv
+Perfect. Anything else today?,voice/conv_perfect_anything_else_today.mp3,conv
+"For a cold, this syrup works well. Do you have a cough too?",voice/live_for_a_cold_this_syrup_works_well_do.mp3,live
+"Take two pills a day, with food. Is that clear?",voice/live_take_two_pills_a_day_with_food_is.mp3,live
+"Is the medicine for you, or for a child?",voice/live_is_the_medicine_for_you_or_for_a.mp3,live
+Are you allergic to any medicine?,voice/live_are_you_allergic_to_any_medicine.mp3,live
+The total is eight dollars. Do you need a bag?,voice/live_the_total_is_eight_dollars_do_you_need.mp3,live
+We also have a good cream for sore muscles. Would you like to see it?,voice/live_we_also_have_a_good_cream_for_sore.mp3,live
+Would you like a glass of water for the first pill?,voice/live_would_you_like_a_glass_of_water_for.mp3,live
+Rest is part of the medicine. Can you rest today?,voice/live_rest_is_part_of_the_medicine_can_you.mp3,live
+"If the pain continues tomorrow, please see a doctor.",voice/live_if_the_pain_continues_tomorrow_please_see_a.mp3,live
+Anything else before you go?,voice/live_anything_else_before_you_go.mp3,live
+"I need something for a headache, please.",voice/model_i_need_something_for_a_headache_please.mp3,model
+"Yes, I have a cough and a sore throat.",voice/model_yes_i_have_a_cough_and_a_sore_throat.mp3,model
+"Yes, two pills a day. Thank you.",voice/model_yes_two_pills_a_day_thank_you.mp3,model
+It is for my daughter.,voice/model_it_is_for_my_daughter.mp3,model
+"No, I am not allergic.",voice/model_no_i_am_not_allergic.mp3,model
+"No bag, thank you. Here is my card.",voice/model_no_bag_thank_you_here_is_my_card.mp3,model
+"Yes, please. My back hurts.",voice/model_yes_please_my_back_hurts.mp3,model
+"Yes, thank you. That is kind.",voice/model_yes_thank_you_that_is_kind.mp3,model
+"Yes, I can rest today.",voice/model_yes_i_can_rest_today.mp3,model
+I understand. Thank you.,voice/model_i_understand_thank_you.mp3,model
+"Take care, get some rest, and feel better soon!",voice/live_take_care_get_some_rest_and_feel_better.mp3,live
+"Of course. May I see your passport or ID, please?",voice/live_of_course_may_i_see_your_passport_or.mp3,live
+Would you like a savings account or a checking account?,voice/live_would_you_like_a_savings_account_or_a.mp3,live
+Your card arrives in five days. Do you need checks too?,voice/live_your_card_arrives_in_five_days_do_you.mp3,live
+Would you like to deposit money today?,voice/live_would_you_like_to_deposit_money_today.mp3,live
+We close at five today. Is there anything urgent?,voice/live_we_close_at_five_today_is_there_anything.mp3,live
+You can use our app to check your money any time.,voice/live_you_can_use_our_app_to_check_your.mp3,live
+Please have a seat. I will call your number soon.,voice/live_please_have_a_seat_i_will_call_your.mp3,live
+Is this your first account with us?,voice/live_is_this_your_first_account_with_us.mp3,live
+There is no fee for this account.,voice/live_there_is_no_fee_for_this_account.mp3,live
+Can I help you with anything else today?,voice/live_can_i_help_you_with_anything_else_today.mp3,live
+"I would like to open an account, please.",voice/model_i_would_like_to_open_an_account_please.mp3,model
+"Yes, here it is.",voice/model_yes_here_it_is.mp3,model
+"A savings account, please.",voice/model_a_savings_account_please.mp3,model
+"No checks, thank you. Just the card.",voice/model_no_checks_thank_you_just_the_card.mp3,model
+"Yes, two hundred dollars, please.",voice/model_yes_two_hundred_dollars_please.mp3,model
+"No, everything is done. Thank you.",voice/model_no_everything_is_done_thank_you.mp3,model
+"Great, I will download it.",voice/model_great_i_will_download_it.mp3,model
+"Thank you, I will wait.",voice/model_thank_you_i_will_wait.mp3,model
+"Yes, it is my first account.",voice/model_yes_it_is_my_first_account.mp3,model
+"That is great, thank you.",voice/model_that_is_great_thank_you.mp3,model
+"That is all, thank you very much.",voice/model_that_is_all_thank_you_very_much.mp3,model
+"Your account is ready. Welcome to the bank, and have a nice day!",voice/live_your_account_is_ready_welcome_to_the_bank.mp3,live
