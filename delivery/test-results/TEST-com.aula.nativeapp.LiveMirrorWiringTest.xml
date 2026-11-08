@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LiveMirrorWiringTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-08T21:59:03.835Z" hostname="runnervmwuk1x" time="0.007">
+<testsuite name="com.aula.nativeapp.LiveMirrorWiringTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-08T22:00:03.193Z" hostname="runnervmwuk1x" time="0.009">
   <properties/>
   <testcase name="a suspect word adds exactly one family event in the live context" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.002"/>
   <testcase name="the phantom-E family gate - s initial, never sh" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
@@ -11,7 +11,7 @@
   <testcase name="aimed practice for the family pattern routes to the guide word sister" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
   <testcase name="the family pattern has real transfer items" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
   <testcase name="correct events never count toward naming" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
-  <testcase name="fewer than three errors never qualify even across two contexts" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
+  <testcase name="fewer than three errors never qualify even across two contexts" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
