@@ -635,3 +635,118 @@ val LEVELS: List<LevelDef> = listOf(
     LevelDef("n3", 3, "Preguntas y viajes", "Preguntar bien y responder en recepción", listOf("t5", "t10", "t12")),
     LevelDef("n4", 4, "Conversación real", "Responder como una persona, no como un diccionario", listOf("t13", "t3", "t8"))
 )
+
+// ------------------------------------------------------------------
+// El Laboratorio de la profesora (Build F, 2026-11-07) — Cognata's
+// Voice Lab, rebuilt in Aula's style: short graded pronunciation
+// series inside the Biblioteca, each item Mira · Escucha · Copia
+// with a plain-language take card ("Tu voz sí se midió"). One set
+// is wired into the Mirror for real (the phantom-E family, fed by
+// first verdicts in context "lab"); the others are honest pure
+// practice — a set with no pattern behind it logs nothing.
+
+data class LabItem(
+    val text: String,
+    val glossEs: String,
+    /** Qué hace tu boca — one plain instruction. */
+    val mouth: String,
+    /** Qué debes oír cuando sale bien. */
+    val listenFor: String
+)
+
+data class LabSet(
+    val id: String,
+    val title: String,
+    val focusEs: String,
+    /** Mirror pattern fed by first verdicts, or null = pure practice. */
+    val patternKey: String?,
+    val items: List<LabItem>
+)
+
+val LAB_SETS: List<LabSet> = listOf(
+    LabSet(
+        id = "pares",
+        title = "Pares que se confunden",
+        focusEs = "La misma vocal, corta o larga, cambia la palabra entera. Primero la corta, luego su pareja larga.",
+        patternKey = null,
+        items = listOf(
+            LabItem("ship", "barco", "Lengua relajada, labios sueltos: una «i» breve y seca, como un golpe.", "Una i corta: «ship», sin estirarla."),
+            LabItem("sheep", "oveja", "Sonríe un poco y estira la vocal: «ii» larga, el doble que en ship.", "Una ii larga y clara: «sheep»."),
+            LabItem("sit", "sentarse", "La misma i breve de ship: corta, seca, sin sonreír.", "i breve: «sit»."),
+            LabItem("seat", "asiento", "Sonríe y estira: «ii» larga como en sheep.", "ii larga: «seat»."),
+            LabItem("beach", "playa", "ii larga y suave, con la sonrisa de sheep.", "Una ii larga: sin ella, la palabra suena a otra muy distinta."),
+            LabItem("full", "lleno", "Labios redondos y una u corta, casi un gruñido breve: «ful».", "Una u breve con los labios redondos.")
+        )
+    ),
+    LabSet(
+        id = "sin-e",
+        title = "Sin la «e» de más",
+        focusEs = "Las palabras que empiezan con el silbido /s/ arrancan directas en inglés: primero el silbido, sin ninguna vocal antes. Nada de «esister».",
+        patternKey = "pronunciation_phantom_e",
+        items = listOf(
+            LabItem("sister", "hermana", "Silba primero: «sss-ister». La lengua no toca ninguna vocal antes del silbido.", "Un silbido limpio al arrancar: «sister»."),
+            LabItem("salad", "ensalada", "«sss-alad»: el silbido manda y la palabra va detrás.", "Arranque directo: «salad», sin «e» antes."),
+            LabItem("soccer", "fútbol", "«sss-occer»: aire primero, voz después.", "Arranque directo: «soccer»."),
+            LabItem("store", "tienda", "«sss-tore»: silbido y golpe de lengua, sin vocal de relleno.", "Arranque directo: «store»."),
+            LabItem("school", "escuela", "Ojo: empieza con «sk», no con «es»: «sss-kool».", "«school» con sk seco al principio."),
+            LabItem("speak", "hablar", "«sss-peak»: el silbido y enseguida la p.", "Arranque directo: «speak».")
+        )
+    ),
+    LabSet(
+        id = "th",
+        title = "El sonido TH",
+        focusEs = "La punta de la lengua asoma entre los dientes y deja pasar el aire. En español no existe: por eso se entrena aparte.",
+        patternKey = null,
+        items = listOf(
+            LabItem("think", "pensar", "Lengua entre los dientes, sopla sin voz: «th-ink».", "Un soplido con la lengua fuera: «think»."),
+            LabItem("thank", "gracias (verbo)", "El mismo soplido sin voz de think.", "Soplido sordo: «thank»."),
+            LabItem("three", "tres", "Soplido sin voz y luego la r: nada de «tree» ni «free».", "«three» con la lengua entre los dientes."),
+            LabItem("this", "esto", "Ahora con voz: la lengua vibra entre los dientes, «th-is».", "Un zumbido con la lengua fuera: «this»."),
+            LabItem("mother", "madre", "TH con voz en el medio: «mo-ther», lengua fuera al final de la primera parte.", "El zumbido de this dentro de la palabra."),
+            LabItem("brother", "hermano", "Igual que mother: TH con voz, sin convertirla en d.", "«brother» con el zumbido, no «broder».")
+        )
+    ),
+    LabSet(
+        id = "ed",
+        title = "Finales -ed",
+        focusEs = "El pasado con -ed suena de tres maneras: /t/, /d/ o una sílaba entera /id/. La regla se oye: si la palabra termina en t o d, se añade sílaba; si no, -ed se pega sin vocal.",
+        patternKey = null,
+        items = listOf(
+            LabItem("walked", "caminó", "Termina en golpe seco de t: «walkt». Sin vocal antes de la t final.", "Un solo golpe: «walked» en una sílaba."),
+            LabItem("watched", "miró", "Igual: «watcht», una sílaba con t final.", "Una sílaba: «watched»."),
+            LabItem("played", "jugó", "Termina en d suave: «playd», una sílaba.", "d final sin vocal extra: «played»."),
+            LabItem("cleaned", "limpió", "«cleand»: la n y la d se pegan, una sílaba larga.", "Una sílaba: «cleaned»."),
+            LabItem("wanted", "quiso", "Aquí SÍ hay sílaba extra: «wan-ted», porque la palabra base termina en t.", "Dos sílabas claras: «wanted»."),
+            LabItem("started", "empezó", "También dos sílabas: «star-ted», la base termina en t.", "Dos sílabas: «started».")
+        )
+    ),
+    LabSet(
+        id = "frases",
+        title = "Frases que se pegan",
+        focusEs = "Las frases de todos los días se dicen de un tirón, con las palabras pegadas. No las traduzcas: cópialas como un solo sonido.",
+        patternKey = null,
+        items = listOf(
+            LabItem("I don't know", "no sé", "Tres golpes pegados: «ai-dont-NOU». La t de don't casi se pierde.", "Un solo bloque rítmico, sin pausas."),
+            LabItem("Let me see", "déjame ver", "«Lemmi-SII»: let y me se pegan en «lemme».", "Las dos primeras palabras como una sola."),
+            LabItem("See you tomorrow", "hasta mañana", "«Sii-iu-to-MO-rrou»: you se pega a see.", "Todo corrido, con el golpe en -mor-."),
+            LabItem("Thank you very much", "muchas gracias", "TH soplada al arrancar y ritmo de vals: «THANK-iu VER-i mach».", "El soplido inicial y el golpe en very."),
+            LabItem("Excuse me", "perdón / disculpe", "«Ex-KIUS-mi»: el golpe va en la segunda sílaba.", "Acento en -cuse, no al principio."),
+            LabItem("How's it going?", "¿qué tal?", "Cuatro palabras, un solo río: «jaus-it-GOU-in».", "Todo pegado, subiendo al final como pregunta.")
+        )
+    )
+)
+
+/**
+ * Silent letters per guide word (character indices): letters that
+ * are written but never pronounced, shown faded in the Guide
+ * (Build H — Cognata's ghosting lesson). Only genuine cases:
+ * night's "gh", and the final mute "e" that lengthens the vowel
+ * before it.
+ */
+val SILENT_LETTERS: Map<String, Set<Int>> = mapOf(
+    "night" to setOf(2, 3),
+    "time" to setOf(3),
+    "make" to setOf(3),
+    "home" to setOf(3),
+    "love" to setOf(3)
+)
