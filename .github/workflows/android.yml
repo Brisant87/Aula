@@ -83,6 +83,17 @@ jobs:
       - name: Point the project at the SDK
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+      - name: Restore the stable signing key (secret, never committed)
+        env:
+          AULA_KEYSTORE_B64: ${{ secrets.AULA_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$AULA_KEYSTORE_B64" ]; then
+            echo "$AULA_KEYSTORE_B64" | base64 -d > debug.keystore
+            echo "stable signing key restored from secret"
+          else
+            echo "no keystore secret set - the next step generates an ephemeral key"
+          fi
+
       - name: Create the debug keystore the project expects
         run: |
           if [ ! -f debug.keystore ]; then
@@ -123,11 +134,17 @@ jobs:
           if-no-files-found: error
 
       # Artifact storage quota on this account is unreliable (it killed
-      # run #55 after a green gate), so the APK is ALSO delivered as a
-      # file on the apk-delivery branch — the route that counts.
+      # run #55 after a green gate), so the APK is ALSO delivered on the
+      # apk-delivery branch — the route that counts. The APK now exceeds
+      # GitHub's 100 MB per-file limit (the bundled speech model), so an
+      # oversized APK is published as split parts (Cognata pattern):
+      # concatenate AulaNative.apk.part-* to reassemble it.
       - name: Deliver the APK on the apk-delivery branch
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk /tmp/AulaNative.apk
+          mkdir -p /tmp/delivery/test-results
+          cp app/build/outputs/apk/debug/app-debug.apk /tmp/delivery/AulaNative.apk
+          cp -r app/build/test-results/testDebugUnitTest/. /tmp/delivery/test-results/ || true
+          ls -la /tmp/delivery/
           git fetch origin apk-delivery || true
           if git rev-parse --verify origin/apk-delivery >/dev/null 2>&1; then
             git checkout -B apk-delivery origin/apk-delivery
@@ -135,7 +152,16 @@ jobs:
             git checkout --orphan apk-delivery
           fi
           git rm -rf . >/dev/null 2>&1 || true
-          cp /tmp/AulaNative.apk AulaNative.apk
-          git add AulaNative.apk
-          git -c user.email="ci@aula.local" -c user.name="Aula CI" commit -m "Deliver APK from run ${{ github.run_number }}" || echo "no change"
+          mkdir -p delivery/test-results
+          APK_BYTES=$(stat -c%s /tmp/delivery/AulaNative.apk)
+          echo "APK size: $APK_BYTES bytes"
+          if [ "$APK_BYTES" -gt 95000000 ]; then
+            split -b 45M /tmp/delivery/AulaNative.apk delivery/AulaNative.apk.part-
+            ls -la delivery/
+          else
+            cp /tmp/delivery/AulaNative.apk delivery/AulaNative.apk
+          fi
+          cp /tmp/delivery/test-results/*.xml delivery/test-results/ 2>/dev/null || true
+          git add delivery
+          git -c user.email="ci@aula.local" -c user.name="Aula CI" commit -m "APK delivery for run ${{ github.run_number }}" || echo "nothing to publish"
           git push origin apk-delivery --force
