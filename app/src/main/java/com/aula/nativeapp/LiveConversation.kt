@@ -609,8 +609,9 @@ object LiveConversationEngine {
 
 /**
  * The Conversación en vivo content banks — one per conversation in
- * Data.kt CONVERSATIONS (eleven since v0.15 added "farmacia" and
- * "banco" with full banks of their own; the test suites pin that
+ * Data.kt CONVERSATIONS (thirteen since v0.17 added "tienda" and
+ * "telefono" with full banks of their own, after v0.15's "farmacia"
+ * and "banco"; the test suites pin that
  * every guided conversation has a complete bank).
  *
  * Authoring rules, so the flow engine stays honest:
@@ -643,6 +644,8 @@ object LiveConversationBanks {
         "restaurante" -> restaurante
         "farmacia" -> farmacia
         "banco" -> banco
+        "tienda" -> tienda
+        "telefono" -> telefono
         else -> null
     }
 
@@ -2344,6 +2347,308 @@ object LiveConversationBanks {
             )
         ),
         wrapUpLine = "Your account is ready. Welcome to the bank, and have a nice day!"
+    )
+
+    // ---------------------------------------------------------- en la tienda de ropa
+
+    private val tienda = LiveBank(
+        conversationId = "tienda",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good afternoon! Can I help you with something?",
+            objectiveEs = "Di qué buscas: una camisa, un vestido: «I am looking for…».",
+            modelReplies = listOf(
+                "Yes, please. I am looking for a blue shirt.",
+                "I am looking for a dress, please."
+            ),
+            targetKeywords = listOf("looking", "shirt", "dress", "please"),
+            clarityTipEs = "«I am looking for» = estoy buscando; el color va antes de la prenda: «blue shirt»."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_size",
+                    partnerLine = "What size do you wear? Small, medium, or large?",
+                    objectiveEs = "Di tu talla: small, medium o large.",
+                    modelReplies = listOf(
+                        "Medium, please.",
+                        "Large, please. It is a gift."
+                    ),
+                    targetKeywords = listOf("medium", "large", "please"),
+                    clarityTipEs = "«Medium» = talla mediana; «large» = grande, no «largo»."
+                ),
+                triggerKeywords = listOf("size", "medium", "large", "small", "wear")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_color",
+                    partnerLine = "We have it in blue, black, and white. Which color do you like?",
+                    objectiveEs = "Elige un color: blue, black o white.",
+                    modelReplies = listOf(
+                        "Blue, please.",
+                        "Black, please. It is for a party."
+                    ),
+                    targetKeywords = listOf("blue", "black", "please"),
+                    clarityTipEs = "El color que eliges se dice solo y claro: «Blue, please»."
+                ),
+                triggerKeywords = listOf("color", "blue", "black", "white", "red")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_try",
+                    partnerLine = "Would you like to try it on? The fitting room is over there.",
+                    objectiveEs = "Acepta probártelo y pregunta por el probador.",
+                    modelReplies = listOf(
+                        "Yes, please. Where is the fitting room?",
+                        "Yes, thank you. Over there?"
+                    ),
+                    targetKeywords = listOf("fitting", "room", "yes"),
+                    clarityTipEs = "«Try on» = probarse la ropa; «fitting room» = el probador."
+                ),
+                triggerKeywords = listOf("try", "fitting", "room", "change")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_price",
+                    partnerLine = "That shirt is twenty dollars. The red one is fifteen.",
+                    objectiveEs = "Pregunta o confirma el precio de la otra camisa.",
+                    modelReplies = listOf(
+                        "How much is the red one?",
+                        "Twenty is fine, thank you."
+                    ),
+                    targetKeywords = listOf("much", "red", "twenty"),
+                    clarityTipEs = "«How much is…?» = ¿cuánto cuesta…?; «the red one» = la roja."
+                ),
+                triggerKeywords = listOf("much", "cost", "price", "dollars", "expensive", "cheap")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_shoes",
+                    partnerLine = "We also have shoes on sale today. Do you need shoes?",
+                    objectiveEs = "Responde sobre los zapatos en oferta.",
+                    modelReplies = listOf(
+                        "Yes, I need new shoes.",
+                        "No, thank you. Just the shirt."
+                    ),
+                    targetKeywords = listOf("shoes", "shirt", "thank"),
+                    clarityTipEs = "«On sale» = en oferta; no es que la tienda esté en venta.",
+                    trapWords = listOf("shoes", "sale")
+                ),
+                triggerKeywords = listOf("shoes", "sale", "boots", "sandals")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_card",
+                    partnerLine = "You can pay by card or cash. Which do you prefer?",
+                    objectiveEs = "Di cómo pagas: con tarjeta o en efectivo.",
+                    modelReplies = listOf(
+                        "By card, please.",
+                        "Cash, thank you."
+                    ),
+                    targetKeywords = listOf("card", "cash"),
+                    clarityTipEs = "«By card» = con tarjeta; «cash» = efectivo."
+                ),
+                triggerKeywords = listOf("card", "cash", "pay", "credit")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_look",
+                partnerLine = "Everything is on this floor: shirts, dresses, and shoes.",
+                objectiveEs = "Muestra que entiendes dónde está todo y mira tranquilo.",
+                modelReplies = listOf(
+                    "Thank you. I will look around.",
+                    "Great, thank you."
+                ),
+                targetKeywords = listOf("look", "thank"),
+                clarityTipEs = "«Look around» = dar una vuelta mirando, sin comprar todavía."
+            ),
+            LivePrompt(
+                id = "g_sale",
+                partnerLine = "Today everything with a red tag is half price.",
+                objectiveEs = "Valora la oferta de la etiqueta roja.",
+                modelReplies = listOf(
+                    "That is great, thank you.",
+                    "Half price? Perfect."
+                ),
+                targetKeywords = listOf("great", "half", "price"),
+                clarityTipEs = "«Half price» = a mitad de precio; «tag» = la etiqueta."
+            ),
+            LivePrompt(
+                id = "g_bag",
+                partnerLine = "Do you need a bag for your new shirt?",
+                objectiveEs = "Decide si necesitas una bolsa para la camisa.",
+                modelReplies = listOf(
+                    "Yes, a bag, please.",
+                    "No bag, thank you."
+                ),
+                targetKeywords = listOf("bag", "please", "thank"),
+                clarityTipEs = "«No bag, thank you» — el cierre corto y cortés de siempre."
+            ),
+            LivePrompt(
+                id = "g_bye",
+                partnerLine = "Anything else before you pay?",
+                objectiveEs = "Cierra la compra en la tienda.",
+                modelReplies = listOf(
+                    "That is all, thank you.",
+                    "Just this, thank you."
+                ),
+                targetKeywords = listOf("all", "thank"),
+                clarityTipEs = "El cierre de siempre: «That is all»."
+            )
+        ),
+        wrapUpLine = "Thank you for visiting us. Enjoy your new clothes, and come back soon!"
+    )
+
+    // ---------------------------------------------------------- una llamada telefónica
+
+    private val telefono = LiveBank(
+        conversationId = "telefono",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Hello, City Office. How can I help you?",
+            objectiveEs = "Di que quieres hacer una cita: «I would like to make an appointment».",
+            modelReplies = listOf(
+                "Hello. I would like to make an appointment, please.",
+                "I would like to make an appointment for Friday, please."
+            ),
+            targetKeywords = listOf("would", "make", "appointment", "please"),
+            clarityTipEs = "«Make an appointment» = hacer una cita; por teléfono la fórmula cortés funciona igual."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_day",
+                    partnerLine = "What day works for you? We have Friday or Monday.",
+                    objectiveEs = "Elige el día de la cita: viernes o lunes.",
+                    modelReplies = listOf(
+                        "Friday, please.",
+                        "Monday morning is better for me."
+                    ),
+                    targetKeywords = listOf("friday", "monday", "morning"),
+                    clarityTipEs = "«Works for you» = te viene bien; los días se escriben con mayúscula."
+                ),
+                triggerKeywords = listOf("day", "friday", "monday", "when", "week")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_time",
+                    partnerLine = "We have ten in the morning or three in the afternoon.",
+                    objectiveEs = "Elige la hora: las diez de la mañana o las tres de la tarde.",
+                    modelReplies = listOf(
+                        "Ten in the morning, please.",
+                        "Three in the afternoon is fine."
+                    ),
+                    targetKeywords = listOf("ten", "morning", "three", "afternoon"),
+                    clarityTipEs = "La hora lleva su parte del día: «in the morning», «in the afternoon».",
+                    trapWords = listOf("three")
+                ),
+                triggerKeywords = listOf("time", "morning", "afternoon", "ten", "three", "hour")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_name",
+                    partnerLine = "Can I have your name, please?",
+                    objectiveEs = "Di tu nombre; si hace falta, deletrea el apellido.",
+                    modelReplies = listOf(
+                        "My name is Alex Rivera.",
+                        "Alex Rivera. R-I-V-E-R-A."
+                    ),
+                    targetKeywords = listOf("name", "alex", "rivera"),
+                    clarityTipEs = "Por teléfono, deletrear el apellido es normal: letra por letra."
+                ),
+                triggerKeywords = listOf("name", "spell", "called")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_number",
+                    partnerLine = "And your phone number, in case we need to call you?",
+                    objectiveEs = "Da tu número de teléfono, cifra por cifra.",
+                    modelReplies = listOf(
+                        "It is five five five, two one four.",
+                        "My number is five five five two one four."
+                    ),
+                    targetKeywords = listOf("number", "five"),
+                    clarityTipEs = "Los números de teléfono se dicen cifra por cifra, con pausas."
+                ),
+                triggerKeywords = listOf("number", "phone", "call", "contact")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_message",
+                    partnerLine = "He is not here now. Can I take a message?",
+                    objectiveEs = "Deja un recado claro y corto.",
+                    modelReplies = listOf(
+                        "Yes, please. Tell him Alex called.",
+                        "Please tell him I called about Friday."
+                    ),
+                    targetKeywords = listOf("tell", "called", "friday"),
+                    clarityTipEs = "El recado va en pasado: «Alex called» = llamó Alex."
+                ),
+                triggerKeywords = listOf("message", "tell", "called", "him")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_change",
+                    partnerLine = "Do you need to change your appointment, or is Friday fine?",
+                    objectiveEs = "Confirma el viernes o pide cambiar la cita.",
+                    modelReplies = listOf(
+                        "Friday is fine, thank you.",
+                        "I need to change it, please."
+                    ),
+                    targetKeywords = listOf("friday", "fine", "change"),
+                    clarityTipEs = "«Friday is fine» = el viernes está bien; «change» = cambiar."
+                ),
+                triggerKeywords = listOf("change", "cancel", "move", "fine")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_hold",
+                partnerLine = "Please hold for a moment. I will check the calendar.",
+                objectiveEs = "Acepta esperar un momento en la línea.",
+                modelReplies = listOf(
+                    "Of course, I will hold.",
+                    "No problem, thank you."
+                ),
+                targetKeywords = listOf("hold", "thank", "problem"),
+                clarityTipEs = "«Hold» al teléfono = esperar en la línea, sin colgar."
+            ),
+            LivePrompt(
+                id = "g_repeat",
+                partnerLine = "Sorry, the line is bad. Can you repeat that, please?",
+                objectiveEs = "Repite tu respuesta despacio y claro.",
+                modelReplies = listOf(
+                    "Of course. Friday, at ten.",
+                    "Yes. My name is Alex Rivera."
+                ),
+                targetKeywords = listOf("friday", "ten", "name"),
+                clarityTipEs = "Si te piden repetir, repite solo lo importante: día, hora, nombre."
+            ),
+            LivePrompt(
+                id = "g_confirm",
+                partnerLine = "Let me confirm: Friday at ten, with Mr. Carter.",
+                objectiveEs = "Confirma los datos de tu cita.",
+                modelReplies = listOf(
+                    "Yes, that is correct.",
+                    "Perfect, Friday at ten."
+                ),
+                targetKeywords = listOf("correct", "friday", "ten"),
+                clarityTipEs = "«That is correct» = correcto, eso es; confirma sin dudar."
+            ),
+            LivePrompt(
+                id = "g_bye",
+                partnerLine = "Is there anything else I can do for you?",
+                objectiveEs = "Cierra la llamada con cortesía.",
+                modelReplies = listOf(
+                    "That is all, thank you very much.",
+                    "No, that is all. Goodbye!"
+                ),
+                targetKeywords = listOf("all", "thank", "goodbye"),
+                clarityTipEs = "Al colgar: «That is all, thank you» y «Goodbye»."
+            )
+        ),
+        wrapUpLine = "Your appointment is confirmed for Friday. Thank you for calling, and goodbye!"
     )
 
 }

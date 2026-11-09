@@ -5,9 +5,10 @@ package com.aula.nativeapp
  *
  * Ported from the web app (~/workspace/aula-apk/app-assets/index.html).
  * Content: all 17 syntax items, the transfer pool (incl. la familia de la
- * «e» fantasma), all 72 cognates (46 originals + 12 from the Puente harvest
- * + 14 from the v0.15 deepening; Hotel and Taxi were already here), 21 guide
- * words (the web app's 20 + sister), all 11 conversations, all 6 listening
+ * «e» fantasma), all 86 cognates (46 originals + 12 from the Puente harvest
+ * + 14 from the v0.15 deepening + 14 from the v0.17 deepening; Hotel and
+ * Taxi were already here), 21 guide
+ * words (the web app's 20 + sister), all 13 conversations, all 6 listening
  * items, 13 formulas, 6 cognate rules, 7 day plans and the 4 Camino levels.
  */
 
@@ -157,7 +158,21 @@ val COGNATES: List<Cognate> = listOf(
     Cognate("Numerous", "Numeroso", "oso", "NÚ-me-ros", "Numerous people came to the park.", "-oso se convierte en -ous."),
     Cognate("Sensible", "Sensato", "falsos", "SÉN-si-bol", "Be sensible and rest today.", "¡Trampa! NO significa «sensible» (emocional); eso es «sensitive»."),
     Cognate("Rope", "Cuerda", "falsos", "RÓUP", "Hold the rope with both hands.", "¡Trampa! NO significa «ropa»; eso es «clothes»."),
-    Cognate("Parents", "Padres", "falsos", "PÉ-rents", "My parents live in Tampa.", "¡Trampa! NO son tus «parientes» en general; eso es «relatives».")
+    Cognate("Parents", "Padres", "falsos", "PÉ-rents", "My parents live in Tampa.", "¡Trampa! NO son tus «parientes» en general; eso es «relatives»."),
+    Cognate("Condition", "Condición", "cion", "kon-DÍ-shon", "The car is in good condition.", "-ción se convierte en -tion."),
+    Cognate("Description", "Descripción", "cion", "dis-KRÍP-shon", "Read the description carefully.", "-ción se convierte en -tion."),
+    Cognate("Imagination", "Imaginación", "cion", "i-ma-yi-NÉI-shon", "Kids have a great imagination.", "-ción se convierte en -tion."),
+    Cognate("Situation", "Situación", "cion", "si-chu-ÉI-shon", "The situation is under control.", "-ción se convierte en -tion."),
+    Cognate("Central", "Central", "perfectos", "SÉN-tral", "The central station is near.", "Se escribe igual; el énfasis va al inicio."),
+    Cognate("Natural", "Natural", "perfectos", "NÁ-chu-ral", "It is a natural park.", "Igual escrita; la «t» suena «ch» suave."),
+    Cognate("Original", "Original", "perfectos", "o-RÍ-yi-nal", "This is the original painting.", "Se escribe igual; la «g» suena «y»."),
+    Cognate("Capital", "Capital", "perfectos", "KÁ-pi-tol", "Madrid is the capital of Spain.", "Idéntica; vale para la ciudad y para el dinero."),
+    Cognate("Necessity", "Necesidad", "dad", "ne-SÉ-si-ti", "Water is a necessity.", "-dad se convierte en -ty."),
+    Cognate("Security", "Seguridad", "dad", "si-KIÚ-ri-ti", "Security is very important here.", "-dad se convierte en -ty."),
+    Cognate("Society", "Sociedad", "dad", "so-SÁI-e-ti", "We live in a society.", "-dad se convierte en -ty."),
+    Cognate("Especially", "Especialmente", "mente", "es-PÉ-sha-li", "I especially like the music.", "-mente se convierte en -ly; la «c» suena «sh»."),
+    Cognate("Probably", "Probablemente", "mente", "PRÁ-ba-bli", "It will probably rain today.", "-mente se convierte en -ly."),
+    Cognate("Mysterious", "Misterioso", "oso", "mis-TÍ-ri-os", "It was a mysterious noise.", "-oso se convierte en -ous.")
 )
 
 val RULES: List<RuleInfo> = listOf(
@@ -633,6 +648,34 @@ val CONVERSATIONS: List<Conversation> = listOf(
             ConvOption("That is all, thank you very much.", true, "conversation_turn"),
             ConvOption("Finish all, thanks very.", false, "conversation_turn"),
             ConvOption("More things no today.", false, "syntax_word_order")), "El cierre de siempre: «That is all, thank you».")
+    )),
+    Conversation("tienda", "En la tienda de ropa", "Postal · Ciudad", listOf(
+        ConvTurn("La dependienta", "Good afternoon! Can I help you with something?", listOf(
+            ConvOption("Yes, please. I am looking for a blue shirt.", true, "conversation_turn"),
+            ConvOption("I looking shirt blue yes.", false, "syntax_word_order"),
+            ConvOption("Shirt blue I want is.", false, "syntax_word_order")), "«I am looking for» = estoy buscando; el color va antes de la prenda: «blue shirt»."),
+        ConvTurn("La dependienta", "What size do you need?", listOf(
+            ConvOption("Medium, please.", true, "conversation_turn"),
+            ConvOption("Size medium is yesterday.", false, "conversation_turn"),
+            ConvOption("Please medium I.", false, "syntax_word_order")), "Las tallas: «small, medium, large». «Medium» = mediana, la de en medio."),
+        ConvTurn("La dependienta", "Would you like to try it on?", listOf(
+            ConvOption("Yes, please. Where is the fitting room?", true, "syntax_present_questions"),
+            ConvOption("Fitting room where is?", false, "syntax_present_questions"),
+            ConvOption("Try I room fitting yes.", false, "syntax_word_order")), "«Try on» = probarse la ropa; «fitting room» = el probador.")
+    )),
+    Conversation("telefono", "Una llamada telefónica", "Postal · Ciudad", listOf(
+        ConvTurn("El recepcionista", "Hello, City Office. How can I help you?", listOf(
+            ConvOption("Hello. I would like to make an appointment, please.", true, "conversation_turn"),
+            ConvOption("I appointment make would like.", false, "syntax_word_order"),
+            ConvOption("Buenas tardes, quiero una cita para el viernes.", false, "conversation_turn")), "Por teléfono también manda la fórmula cortés: «I would like to make an appointment» = quiero hacer una cita."),
+        ConvTurn("El recepcionista", "Of course. What day works for you?", listOf(
+            ConvOption("Friday morning, please.", true, "conversation_turn"),
+            ConvOption("Friday is yesterday morning.", false, "conversation_turn"),
+            ConvOption("Morning Friday I.", false, "syntax_word_order")), "«Friday morning» = el viernes por la mañana: día + parte del día, en ese orden."),
+        ConvTurn("El recepcionista", "Perfect. Can I take a message?", listOf(
+            ConvOption("Yes, please. Tell him Alex called.", true, "conversation_turn"),
+            ConvOption("Message take you can yes.", false, "syntax_word_order"),
+            ConvOption("Tell called Alex him please.", false, "syntax_word_order")), "«Take a message» = tomar un recado; el recado va en pasado: «Alex called» = llamó Alex.")
     ))
 )
 
@@ -802,6 +845,34 @@ val LAB_SETS: List<LabSet> = listOf(
             LabItem("hour", "hora", "Aquí la h se calla: la palabra empieza en la vocal, «aur». Escrita con h, oída sin ella.", "Empieza en vocal: «hour», sin soplo."),
             LabItem("honest", "honesto", "También muda: «ó-nest», como si la h no existiera.", "Sin soplo: «honest»."),
             LabItem("honor", "honor", "La h se calla igual que en hour y honest: «ó-nor».", "Empieza en la o: «honor».")
+        )
+    ),
+    LabSet(
+        id = "uve",
+        title = "La «v» de verdad",
+        focusEs = "En inglés, «v» y «b» son sonidos distintos: la «v» vibra con el labio de abajo contra los dientes de arriba; la «b» cierra los labios del todo. Si las mezclas, «very» suena a otra palabra.",
+        patternKey = null,
+        items = listOf(
+            LabItem("very", "muy", "Labio de abajo contra los dientes de arriba y vibra: «vvv-ery». Nada de cerrar los labios como con la «b».", "Una vibración clara al arrancar: «very», no «bery»."),
+            LabItem("seven", "siete", "La «v» del medio también vibra entre labio y dientes: «se-vvv-en».", "La vibración en el centro: «seven»."),
+            LabItem("love", "amar / amor", "Termina en «v» que vibra entre el labio y los dientes; la «e» final no suena.", "Cierre vibrado: «love», no «lof»."),
+            LabItem("river", "río", "La «v» central vibra suave entre las dos vocales: «ri-vvv-er».", "Vibración en el medio: «river»."),
+            LabItem("vest", "chaleco", "Arranca vibrando como en «very»: «vvv-est», sin cerrar los labios.", "Arranque con vibración: «vest», no «best»."),
+            LabItem("van", "furgoneta", "La «v» inicial vibra y la palabra es corta y seca: «vvv-an».", "«van» con la v de verdad, no «ban».")
+        )
+    ),
+    LabSet(
+        id = "erre",
+        title = "La «r» inglesa",
+        focusEs = "La «r» inglesa no vibra y no toca nada: la lengua se curva hacia atrás, en el aire, y el sonido sale redondo. Nunca es la «rr» de «perro».",
+        patternKey = null,
+        items = listOf(
+            LabItem("red", "rojo", "Lengua curvada hacia atrás sin tocar nada: «rrr-ed». Nada de vibrar.", "Una r redonda y quieta: «red»."),
+            LabItem("right", "derecha / correcto", "La misma r curvada al arrancar la palabra: «rrr-ait».", "Arranque redondo: «right», sin vibrar."),
+            LabItem("very", "muy", "La «r» se curva hacia atrás en el medio: «ve-rrr-y».", "La r redonda en el medio: «very»."),
+            LabItem("car", "carro / coche", "La «r» final se oye, redonda y suave: «carrr». En EE. UU. no se calla.", "Una r final suave y clara: «car»."),
+            LabItem("water", "agua", "La «r» final es el sonido más flojo de la palabra: lengua curvada y casi un suspiro.", "Cierre suave con r: «water»."),
+            LabItem("three", "tres", "Después del soplido «th», la lengua se curva hacia atrás para la r: «th-rrr-ii».", "«three» con la r redonda, sin vibrar.")
         )
     )
 )
