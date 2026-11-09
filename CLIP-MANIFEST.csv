@@ -425,3 +425,71 @@ Can I help you with anything else today?,voice/live_can_i_help_you_with_anything
 "That is great, thank you.",voice/model_that_is_great_thank_you.mp3,model
 "That is all, thank you very much.",voice/model_that_is_all_thank_you_very_much.mp3,model
 "Your account is ready. Welcome to the bank, and have a nice day!",voice/live_your_account_is_ready_welcome_to_the_bank.mp3,live
+Good afternoon! Can I help you with something?,voice/conv_good_afternoon_can_i_help_you_with_something.mp3,conv
+What size do you need?,voice/conv_what_size_do_you_need.mp3,conv
+Would you like to try it on?,voice/conv_would_you_like_to_try_it_on.mp3,conv
+"Hello, City Office. How can I help you?",voice/conv_hello_city_office_how_can_i_help_you.mp3,conv
+Of course. What day works for you?,voice/conv_of_course_what_day_works_for_you.mp3,conv
+Perfect. Can I take a message?,voice/conv_perfect_can_i_take_a_message.mp3,conv
+"What size do you wear? Small, medium, or large?",voice/live_what_size_do_you_wear_small_medium_or.mp3,live
+"We have it in blue, black, and white. Which color do you like?",voice/live_we_have_it_in_blue_black_and_white.mp3,live
+Would you like to try it on? The fitting room is over there.,voice/live_would_you_like_to_try_it_on_the.mp3,live
+That shirt is twenty dollars. The red one is fifteen.,voice/live_that_shirt_is_twenty_dollars_the_red_one.mp3,live
+We also have shoes on sale today. Do you need shoes?,voice/live_we_also_have_shoes_on_sale_today_do.mp3,live
+You can pay by card or cash. Which do you prefer?,voice/live_you_can_pay_by_card_or_cash_which.mp3,live
+"Everything is on this floor: shirts, dresses, and shoes.",voice/live_everything_is_on_this_floor_shirts_dresses.mp3,live
+Today everything with a red tag is half price.,voice/live_today_everything_with_a_red_tag_is_half.mp3,live
+Do you need a bag for your new shirt?,voice/live_do_you_need_a_bag_for_your_new.mp3,live
+Anything else before you pay?,voice/live_anything_else_before_you_pay.mp3,live
+"Thank you for visiting us. Enjoy your new clothes, and come back soon!",voice/live_thank_you_for_visiting_us_enjoy_your_new.mp3,live
+"Yes, please. I am looking for a blue shirt.",voice/model_yes_please_i_am_looking_for_a_blue.mp3,model
+"Medium, please.",voice/model_medium_please.mp3,model
+"Blue, please.",voice/model_blue_please.mp3,model
+"Yes, please. Where is the fitting room?",voice/model_yes_please_where_is_the_fitting_room.mp3,model
+How much is the red one?,voice/model_how_much_is_the_red_one.mp3,model
+"Yes, I need new shoes.",voice/model_yes_i_need_new_shoes.mp3,model
+Thank you. I will look around.,voice/model_thank_you_i_will_look_around.mp3,model
+"Yes, a bag, please.",voice/model_yes_a_bag_please.mp3,model
+What day works for you? We have Friday or Monday.,voice/live_what_day_works_for_you_we_have_friday.mp3,live
+We have ten in the morning or three in the afternoon.,voice/live_we_have_ten_in_the_morning_or_three.mp3,live
+"Can I have your name, please?",voice/live_can_i_have_your_name_please.mp3,live
+"And your phone number, in case we need to call you?",voice/live_and_your_phone_number_in_case_we_need.mp3,live
+He is not here now. Can I take a message?,voice/live_he_is_not_here_now_can_i_take.mp3,live
+"Do you need to change your appointment, or is Friday fine?",voice/live_do_you_need_to_change_your_appointment_or.mp3,live
+Please hold for a moment. I will check the calendar.,voice/live_please_hold_for_a_moment_i_will_check.mp3,live
+"Sorry, the line is bad. Can you repeat that, please?",voice/live_sorry_the_line_is_bad_can_you_repeat.mp3,live
+"Let me confirm: Friday at ten, with Mr. Carter.",voice/live_let_me_confirm_friday_at_ten_with_mr.mp3,live
+Is there anything else I can do for you?,voice/live_is_there_anything_else_i_can_do_for.mp3,live
+"Your appointment is confirmed for Friday. Thank you for calling, and goodbye!",voice/live_your_appointment_is_confirmed_for_friday.mp3,live
+"Hello. I would like to make an appointment, please.",voice/model_hello_i_would_like_to_make_an_appointment.mp3,model
+"Friday, please.",voice/model_friday_please.mp3,model
+"Ten in the morning, please.",voice/model_ten_in_the_morning_please.mp3,model
+My name is Alex Rivera.,voice/model_my_name_is_alex_rivera.mp3,model
+"It is five five five, two one four.",voice/model_it_is_five_five_five_two_one_four.mp3,model
+"Yes, please. Tell him Alex called.",voice/model_yes_please_tell_him_alex_called.mp3,model
+"Friday is fine, thank you.",voice/model_friday_is_fine_thank_you.mp3,model
+"Of course, I will hold.",voice/model_of_course_i_will_hold.mp3,model
+"Of course. Friday, at ten.",voice/model_of_course_friday_at_ten.mp3,model
+"Yes, that is correct.",voice/model_yes_that_is_correct.mp3,model
+Condition,voice/cog_condition.mp3,cog
+Description,voice/cog_description.mp3,cog
+Imagination,voice/cog_imagination.mp3,cog
+Situation,voice/cog_situation.mp3,cog
+Central,voice/cog_central.mp3,cog
+Natural,voice/cog_natural.mp3,cog
+Original,voice/cog_original.mp3,cog
+Capital,voice/cog_capital.mp3,cog
+Necessity,voice/cog_necessity.mp3,cog
+Security,voice/cog_security.mp3,cog
+Society,voice/cog_society.mp3,cog
+Especially,voice/cog_especially.mp3,cog
+Probably,voice/cog_probably.mp3,cog
+Mysterious,voice/cog_mysterious.mp3,cog
+"very","v_lab_very.mp3","Helio (avocado_v2:MAI_03)","lab"
+"seven","v_lab_seven.mp3","Helio (avocado_v2:MAI_03)","lab"
+"river","v_lab_river.mp3","Helio (avocado_v2:MAI_03)","lab"
+"vest","v_lab_vest.mp3","Helio (avocado_v2:MAI_03)","lab"
+"van","v_lab_van.mp3","Helio (avocado_v2:MAI_03)","lab"
+"red","v_lab_red.mp3","Helio (avocado_v2:MAI_03)","lab"
+"right","v_lab_right.mp3","Helio (avocado_v2:MAI_03)","lab"
+"car","v_lab_car.mp3","Helio (avocado_v2:MAI_03)","lab"
