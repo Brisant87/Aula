@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.EnhancementContentTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:52:28.568Z" hostname="runnervmwuk1x" time="0.024">
+<testsuite name="com.aula.nativeapp.EnhancementContentTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-09T15:37:24.162Z" hostname="runnervmwuk1x" time="0.008">
   <properties/>
-  <testcase name="the final exam pool spans the course" classname="com.aula.nativeapp.EnhancementContentTest" time="0.001"/>
-  <testcase name="ghosting map names real guide words and in-range letters" classname="com.aula.nativeapp.EnhancementContentTest" time="0.014"/>
-  <testcase name="lab series are complete and uniquely identified" classname="com.aula.nativeapp.EnhancementContentTest" time="0.008"/>
-  <testcase name="only the phantom-e lab set feeds the mirror" classname="com.aula.nativeapp.EnhancementContentTest" time="0.001"/>
+  <testcase name="the final exam pool spans the course" classname="com.aula.nativeapp.EnhancementContentTest" time="0.0"/>
+  <testcase name="ghosting map names real guide words and in-range letters" classname="com.aula.nativeapp.EnhancementContentTest" time="0.004"/>
+  <testcase name="lab series are complete and uniquely identified" classname="com.aula.nativeapp.EnhancementContentTest" time="0.004"/>
+  <testcase name="only the phantom-e lab set feeds the mirror" classname="com.aula.nativeapp.EnhancementContentTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
