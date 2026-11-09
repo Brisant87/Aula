@@ -22,8 +22,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -242,7 +257,17 @@ fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager, voiceK
                             tab = t.id
                             tts.stop()
                         },
-                        icon = { Text(t.icon, fontSize = 17.sp) },
+                        icon = {
+                            val iconScale by animateFloatAsState(
+                                targetValue = if (tab == t.id) 1.3f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "tabIconScale"
+                            )
+                            Text(t.icon, fontSize = 17.sp, modifier = Modifier.scale(iconScale))
+                        },
                         label = { Text(t.label, fontSize = 10.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedTextColor = TerracottaDeep,
@@ -258,18 +283,36 @@ fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager, voiceK
             Modifier
                 .padding(pad)
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Sand, Color(0xFFEEDDBE))
+                    )
+                )
         ) {
             // Reading `tick` here re-runs the current screen whenever the
             // Mirror store changes, so lists and statuses stay fresh.
             val currentTick = tick
             if (currentTick < -1) Text("") // never true; keeps the read obvious
-            when (tab) {
-                "hoy" -> HoyScreen(store, settings, tts, bump) { tab = "espejo" }
-                "espejo" -> EspejoScreen(store, settings, tts, bump)
-                "conversaciones" -> ConversacionesScreen(store, settings, tts, bump)
-                "biblioteca" -> BibliotecaScreen(store, settings, tts, bump)
-                "camino" -> CaminoScreen(store, settings, tts, bump)
-                "ajustes" -> AjustesScreen(store, settings, voiceKeys, tts, bump)
+            AnimatedContent(
+                targetState = tab,
+                transitionSpec = {
+                    val dir =
+                        if (TABS.indexOfFirst { it.id == targetState } >= TABS.indexOfFirst { it.id == initialState }) 1 else -1
+                    (fadeIn(tween(240)) +
+                        slideInHorizontally(tween(240)) { it / 5 * dir }) togetherWith
+                        (fadeOut(tween(170)) +
+                            slideOutHorizontally(tween(170)) { -it / 5 * dir })
+                },
+                label = "tabTransition"
+            ) { current ->
+                when (current) {
+                    "hoy" -> HoyScreen(store, settings, tts, bump) { tab = "espejo" }
+                    "espejo" -> EspejoScreen(store, settings, tts, bump)
+                    "conversaciones" -> ConversacionesScreen(store, settings, tts, bump)
+                    "biblioteca" -> BibliotecaScreen(store, settings, tts, bump)
+                    "camino" -> CaminoScreen(store, settings, tts, bump)
+                    "ajustes" -> AjustesScreen(store, settings, voiceKeys, tts, bump)
+                }
             }
         }
     }
@@ -289,6 +332,44 @@ fun Stamp(text: String, olive: Boolean = false) {
     )
 }
 
+/**
+ * Springy press feedback: the element dips toward [pressedScale] while a
+ * finger is on it and bounces back on release. The caller must pass the
+ * same [interaction] to the button so both see the same press state.
+ */
+@Composable
+fun Modifier.pressScale(interaction: MutableInteractionSource, pressedScale: Float = 0.96f): Modifier {
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) pressedScale else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pressScale"
+    )
+    return this.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+/** Fade-and-rise entrance, played once when a block first appears. */
+@Composable
+fun Modifier.enterRise(): Modifier {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val p by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = tween(280),
+        label = "enterRise"
+    )
+    return this.graphicsLayer {
+        alpha = p
+        translationY = (1f - p) * 36f
+    }
+}
+
 @Composable
 fun JournalCard(
     oliveCard: Boolean = false,
@@ -300,6 +381,7 @@ fun JournalCard(
         ),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, JournalLine),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(20.dp), content = content)
@@ -308,6 +390,13 @@ fun JournalCard(
 
 @Composable
 fun ViewTitle(title: String, sub: String) {
+    Box(
+        Modifier
+            .width(30.dp)
+            .height(4.dp)
+            .background(Terracotta, RoundedCornerShape(2.dp))
+    )
+    Spacer(Modifier.height(8.dp))
     Text(title, style = MaterialTheme.typography.headlineMedium, color = Ink)
     Spacer(Modifier.height(2.dp))
     Text(sub, style = MaterialTheme.typography.bodyMedium, color = Ink.copy(alpha = 0.75f))
@@ -316,11 +405,33 @@ fun ViewTitle(title: String, sub: String) {
 
 @Composable
 fun FeedbackBox(text: String, good: Boolean) {
+    val bg by animateColorAsState(
+        targetValue = if (good) GoodBg else BadBg,
+        animationSpec = tween(260),
+        label = "feedbackBg"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (good) Olive else Terracotta,
+        animationSpec = tween(260),
+        label = "feedbackBorder"
+    )
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val enter by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = tween(220),
+        label = "feedbackEnter"
+    )
     Box(
         Modifier
             .fillMaxWidth()
-            .background(if (good) GoodBg else BadBg, RoundedCornerShape(16.dp))
-            .border(1.dp, if (good) Olive else Terracotta, RoundedCornerShape(16.dp))
+            .graphicsLayer {
+                scaleX = 0.96f + 0.04f * enter
+                scaleY = 0.96f + 0.04f * enter
+                alpha = enter
+            }
+            .background(bg, RoundedCornerShape(16.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
         Text(text, style = MaterialTheme.typography.bodyMedium)
@@ -338,6 +449,7 @@ fun NoteText(text: String) {
 
 @Composable
 fun WordChip(text: String, used: Boolean, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
     OutlinedButton(
         onClick = onClick,
         enabled = !used,
@@ -347,7 +459,10 @@ fun WordChip(text: String, used: Boolean, onClick: () -> Unit) {
             contentColor = if (used) Ink.copy(alpha = 0.35f) else TerracottaDeep,
             containerColor = Cream
         ),
-        modifier = Modifier.padding(end = 6.dp, bottom = 6.dp)
+        interactionSource = interaction,
+        modifier = Modifier
+            .padding(end = 6.dp, bottom = 6.dp)
+            .pressScale(interaction, pressedScale = 0.92f)
     ) {
         Text(text, fontSize = 15.sp)
     }
@@ -369,23 +484,34 @@ fun ChipRows(items: List<String>, usedIdx: Set<Int>, onPick: (Int) -> Unit) {
 @Composable
 fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
     // state: 0 normal, 1 picked-good, 2 picked-bad, 3 dimmed
-    val bg = when (state) {
+    val bgTarget = when (state) {
         1 -> GoodBg
         2 -> BadBg
         else -> Cream
     }
-    val fg = when (state) {
+    val fgTarget = when (state) {
         3 -> Ink.copy(alpha = 0.4f)
         else -> Ink
     }
+    val borderTarget = when (state) {
+        1 -> Olive
+        2 -> Terracotta
+        else -> JournalLine
+    }
+    val bg by animateColorAsState(bgTarget, tween(240), label = "optionBg")
+    val fg by animateColorAsState(fgTarget, tween(240), label = "optionFg")
+    val borderColor by animateColorAsState(borderTarget, tween(240), label = "optionBorder")
+    val interaction = remember { MutableInteractionSource() }
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, if (state == 1) Olive else if (state == 2) Terracotta else JournalLine),
+        border = BorderStroke(1.dp, borderColor),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = fg, containerColor = bg),
+        interactionSource = interaction,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp)
+            .pressScale(interaction, pressedScale = 0.98f)
     ) {
         Text(text, fontSize = 15.sp, textAlign = TextAlign.Start, modifier = Modifier.fillMaxWidth())
     }
@@ -393,11 +519,13 @@ fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
 
 @Composable
 fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.pressScale(interaction),
         enabled = enabled,
         shape = RoundedCornerShape(24.dp),
+        interactionSource = interaction,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (olive) Olive else Terracotta,
             contentColor = Cream
@@ -409,11 +537,13 @@ fun PrimaryButton(text: String, olive: Boolean = false, modifier: Modifier = Mod
 
 @Composable
 fun GhostButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.pressScale(interaction),
         shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, TerracottaDeep),
+        interactionSource = interaction,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TerracottaDeep, containerColor = Cream)
     ) {
         Text(text)
@@ -1865,23 +1995,32 @@ fun HoyScreen(
                 TeacherStrip(guidance.first, guidance.second, tts)
                 Spacer(Modifier.height(10.dp))
             }
-            key(step + phase) {
+            AnimatedContent(
+                targetState = phase,
+                transitionSpec = {
+                    (fadeIn(tween(260)) +
+                        slideInVertically(tween(260)) { it / 8 }) togetherWith
+                        fadeOut(tween(150))
+                },
+                label = "lessonStep"
+            ) { ph ->
+                val s = steps.getOrElse(ph) { "fin" }
                 when {
-                    step == "recall1" -> RecallQuestion(wc1, distractFor(wc1, di + 1), "hoy", store, bump) { advance() }
-                    step == "recall2" -> RecallQuestion(wc2, distractFor(wc2, di + 9), "hoy", store, bump) { advance() }
-                    step.startsWith("syntax") -> {
-                        val idx = step.removePrefix("syntax").toInt()
+                    s == "recall1" -> RecallQuestion(wc1, distractFor(wc1, di + 1), "hoy", store, bump) { advance() }
+                    s == "recall2" -> RecallQuestion(wc2, distractFor(wc2, di + 9), "hoy", store, bump) { advance() }
+                    s.startsWith("syntax") -> {
+                        val idx = s.removePrefix("syntax").toInt()
                         SyntaxBuilder(focusSyntax[idx], "hoy", store, tts, bump) { advance() }
                     }
-                    step.startsWith("cog") -> {
-                        val idx = step.removePrefix("cog").toInt()
+                    s.startsWith("cog") -> {
+                        val idx = s.removePrefix("cog").toInt()
                         RecallQuestion(focusCognates[idx], distractFor(focusCognates[idx], di + 4 + idx * 13), "hoy", store, bump) { advance() }
                     }
-                    step.startsWith("lis") -> {
-                        val idx = step.removePrefix("lis").toInt()
+                    s.startsWith("lis") -> {
+                        val idx = s.removePrefix("lis").toInt()
                         ListeningExercise(focusListening[idx], "hoy", store, tts, support = true, bump = bump) { advance() }
                     }
-                    step == "guide" -> {
+                    s == "guide" -> {
                         if (settings.guide) {
                             GuideCard(guideWord, "hoy", store, tts, bump, onRated = { advance() })
                         } else {
@@ -1892,8 +2031,8 @@ fun HoyScreen(
                             }
                         }
                     }
-                    step == "transfer" -> TransferCheck(focusKey, store, settings, tts, bump) { advance() }
-                    step == "retention" -> RetentionCheck(retentionKey!!, store, settings, tts, bump) { advance() }
+                    s == "transfer" -> TransferCheck(focusKey, store, settings, tts, bump) { advance() }
+                    s == "retention" -> RetentionCheck(retentionKey!!, store, settings, tts, bump) { advance() }
                     else -> {
                         JournalCard(oliveCard = true) {
                             Stamp("Página completa")

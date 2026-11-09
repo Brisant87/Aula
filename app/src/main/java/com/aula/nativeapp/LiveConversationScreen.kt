@@ -12,6 +12,9 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -531,18 +534,25 @@ fun LiveConversationScreen(
             )
             Spacer(Modifier.width(10.dp))
             for (i in 0 until LiveConversationEngine.EXCHANGE_GOAL) {
+                val dotSize by animateDpAsState(
+                    targetValue = if (i < state.exchangesDone) 10.dp else 8.dp,
+                    animationSpec = tween(220),
+                    label = "dotSize"
+                )
+                val dotColor by animateColorAsState(
+                    targetValue = when {
+                        i < state.exchangesDone -> LiveOlive
+                        i == state.exchangesDone && !state.isFinished -> Color(0xFFBC5325)
+                        else -> LiveLine
+                    },
+                    animationSpec = tween(260),
+                    label = "dotColor"
+                )
                 Box(
                     Modifier
                         .padding(horizontal = 3.dp)
-                        .size(if (i < state.exchangesDone) 10.dp else 8.dp)
-                        .background(
-                            when {
-                                i < state.exchangesDone -> LiveOlive
-                                i == state.exchangesDone && !state.isFinished -> Color(0xFFBC5325)
-                                else -> LiveLine
-                            },
-                            CircleShape
-                        )
+                        .size(dotSize)
+                        .background(dotColor, CircleShape)
                 )
             }
         }
@@ -550,6 +560,7 @@ fun LiveConversationScreen(
 
         // The chat transcript.
         for (entry in state.entries) {
+          Box(Modifier.enterRise()) {
             if (entry.fromPartner) {
                 JournalCard {
                     Text("🧑 $partnerName", fontWeight = FontWeight.Bold, color = LiveTerracottaDeep)
@@ -590,6 +601,7 @@ fun LiveConversationScreen(
                     )
                 }
             }
+          }
             Spacer(Modifier.height(12.dp))
         }
 
