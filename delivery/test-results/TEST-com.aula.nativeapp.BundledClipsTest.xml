@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.BundledClipsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-09T13:57:51.302Z" hostname="htch-runtime" time="0.152">
+<testsuite name="com.aula.nativeapp.BundledClipsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-09T16:26:20.924Z" hostname="htch-runtime" time="0.168">
   <properties/>
-  <testcase name="clip map is complete and well formed" classname="com.aula.nativeapp.BundledClipsTest" time="0.059"/>
-  <testcase name="every fixed spoken text has a bundled clip" classname="com.aula.nativeapp.BundledClipsTest" time="0.091"/>
+  <testcase name="clip map is complete and well formed" classname="com.aula.nativeapp.BundledClipsTest" time="0.072"/>
+  <testcase name="every fixed spoken text has a bundled clip" classname="com.aula.nativeapp.BundledClipsTest" time="0.093"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
