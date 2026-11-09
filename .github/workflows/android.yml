@@ -1,5 +1,13 @@
 name: Build Aula APK
 
+# Consolidated build (2026-11-09): the ONLY build path is the self-hosted
+# runner "aula-local" on Pablo's machine. It uses the machine's own JDK 17,
+# Gradle 9.3.1, Android SDK and the offline dependency mirror — no
+# GitHub-hosted minutes, no toolchain downloads. The runner reproduces the
+# old hosted builds byte-for-byte (proven by the runner probe, run #1:
+# gate 52/52 and an APK checksum-identical to hosted run #97).
+# Delivery is unchanged: split parts + test XMLs on the apk-delivery branch.
+
 on:
   push:
     branches: [main, master]
@@ -10,7 +18,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, aula-local]
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -21,67 +29,25 @@ jobs:
           unzip -o -q voice_clips.zip -d app/src/main/assets
           ls app/src/main/assets/voice | wc -l
 
-      - name: Fetch the in-app speech engine (sherpa-onnx AAR + English model)
+      - name: Stage the in-app speech engine (sherpa-onnx AAR + English model)
         run: |
-          set -x
-          # sherpa-onnx is not on Maven Central. Ask the release
-          # itself what it ships and take the PLAIN standalone .aar
-          # (the release also ships an RKNN variant that sorts first
-          # — never take it). Same pinned version and model as
-          # Cognata's engine (v1.13.7, Zipformer-en int8).
-          mkdir -p /tmp/sherpa && cd /tmp/sherpa
-          curl -fsSL "https://api.github.com/repos/k2-fsa/sherpa-onnx/releases/tags/v1.13.7" -o release.json
-          grep -o '"browser_download_url": *"[^"]*"' release.json | cut -d'"' -f4 > assets.txt || true
-          cat assets.txt
-          AAR_URL=$(grep -E '\.aar$' assets.txt | grep -v rknn | head -1 || true)
-          test -n "$AAR_URL"
-          echo "Using standalone AAR asset: $AAR_URL"
-          mkdir -p "$GITHUB_WORKSPACE/app/libs"
-          curl -fSL -o "$GITHUB_WORKSPACE/app/libs/sherpa-onnx.aar" "$AAR_URL"
-          # The plain AAR bundles native libraries for FOUR ABIs but
-          # the app is arm64-only (abiFilters): strip the unused ABIs
-          # so the APK stays well under the delivery-branch limit.
-          mkdir -p /tmp/aar-trim && cd /tmp/aar-trim
-          unzip -q "$GITHUB_WORKSPACE/app/libs/sherpa-onnx.aar"
-          ls jni/
-          find jni -mindepth 1 -maxdepth 1 ! -name 'arm64-v8a' -exec rm -rf {} +
-          ls jni/arm64-v8a/
-          rm "$GITHUB_WORKSPACE/app/libs/sherpa-onnx.aar"
-          zip -qr "$GITHUB_WORKSPACE/app/libs/sherpa-onnx.aar" . -x '.*'
-          cd /tmp/sherpa
-          unzip -l "$GITHUB_WORKSPACE/app/libs/sherpa-onnx.aar" | head -30
-          ls -la "$GITHUB_WORKSPACE/app/libs/"
-          # The English model (Zipformer transducer, int8): only the
-          # four files LocalAsrEngine names go into assets.
-          cd "$GITHUB_WORKSPACE/app/src/main/assets"
-          curl -fSL -O "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-en-2023-06-26.tar.bz2"
-          tar xjf sherpa-onnx-streaming-zipformer-en-2023-06-26.tar.bz2
-          SRC=sherpa-onnx-streaming-zipformer-en-2023-06-26
-          ls -la "$SRC"
-          mkdir -p asr-en
-          cp "$SRC/encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx" asr-en/
-          cp "$SRC/decoder-epoch-99-avg-1-chunk-16-left-128.onnx" asr-en/
-          cp "$SRC/joiner-epoch-99-avg-1-chunk-16-left-128.onnx" asr-en/
-          cp "$SRC/tokens.txt" asr-en/
-          rm -rf "$SRC" sherpa-onnx-streaming-zipformer-en-2023-06-26.tar.bz2
-          ls -la asr-en/
-          test -s asr-en/encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx
-          test -s asr-en/tokens.txt
+          set -e
+          # Machine-local copies of the exact artifacts the hosted workflow
+          # used to download: the plain standalone sherpa-onnx v1.13.7 AAR
+          # (arm64-only, already trimmed) from the local working tree, and
+          # the four Zipformer-en int8 model files LocalAsrEngine names,
+          # stashed under ~/workspace/tools/aula-runner-stash/.
+          mkdir -p app/libs
+          cp /home/hatch/workspace/aula-native/app/libs/sherpa-onnx.aar app/libs/
+          ls -la app/libs/
+          mkdir -p app/src/main/assets/asr-en
+          cp /home/hatch/workspace/tools/aula-runner-stash/asr-en/* app/src/main/assets/asr-en/
+          ls -la app/src/main/assets/asr-en/
+          test -s app/src/main/assets/asr-en/encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx
+          test -s app/src/main/assets/asr-en/tokens.txt
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Install Android platform and build tools
-        run: |
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
-
-      - name: Point the project at the SDK
-        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - name: Point the project at the local SDK
+        run: echo "sdk.dir=/home/hatch/workspace/tools/android-sdk" > local.properties
 
       - name: Restore the stable signing key (secret, never committed)
         env:
@@ -105,10 +71,11 @@ jobs:
           fi
 
       - name: Run unit tests (live conversation gate)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 9.3.1
-          arguments: testDebugUnitTest --stacktrace
+        env:
+          JAVA_HOME: /home/hatch/workspace/tools/jdk-17.0.21+9
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          /home/hatch/workspace/tools/gradle-9.3.1/bin/gradle testDebugUnitTest --offline -I /home/hatch/workspace/tools/mirror-init.gradle --stacktrace
 
       - name: Upload unit test reports
         if: always()
@@ -120,10 +87,11 @@ jobs:
           if-no-files-found: ignore
 
       - name: Build the debug APK
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 9.3.1
-          arguments: assembleDebug --stacktrace
+        env:
+          JAVA_HOME: /home/hatch/workspace/tools/jdk-17.0.21+9
+        run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
+          /home/hatch/workspace/tools/gradle-9.3.1/bin/gradle assembleDebug --offline -I /home/hatch/workspace/tools/mirror-init.gradle --stacktrace
 
       - name: Upload the APK
         continue-on-error: true
