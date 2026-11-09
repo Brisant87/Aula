@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LiveConversationSessionTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-09T16:26:21.201Z" hostname="htch-runtime" time="0.091">
+<testsuite name="com.aula.nativeapp.LiveConversationSessionTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-09T16:18:43.083Z" hostname="htch-runtime" time="0.036">
   <properties/>
-  <testcase name="grading is best-of across the prompt model replies" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.008"/>
+  <testcase name="grading is best-of across the prompt model replies" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.015"/>
   <testcase name="a model reply grades GREEN and produces word feedback for the same reply" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.002"/>
-  <testcase name="silence and blank input are recognition failures, not replies" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.0"/>
-  <testcase name="a Spanish answer is gated to the RED band" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.002"/>
-  <testcase name="the scorer detects the true phantom-E form - e plus keyword" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.004"/>
-  <testcase name="a produced word betrayed by its alternative yields exactly one suspect" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.062"/>
-  <testcase name="an unspoken word is never a suspect - alternatives only incriminate produced words" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.002"/>
-  <testcase name="session recap math - running average and distinct weak words in order" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.005"/>
-  <testcase name="the single-word retry score is boundary-policed and display-only by construction" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.001"/>
+  <testcase name="silence and blank input are recognition failures, not replies" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.001"/>
+  <testcase name="a Spanish answer is gated to the RED band" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.001"/>
+  <testcase name="the scorer detects the true phantom-E form - e plus keyword" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.003"/>
+  <testcase name="a produced word betrayed by its alternative yields exactly one suspect" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.004"/>
+  <testcase name="an unspoken word is never a suspect - alternatives only incriminate produced words" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.001"/>
+  <testcase name="session recap math - running average and distinct weak words in order" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.004"/>
+  <testcase name="the single-word retry score is boundary-policed and display-only by construction" classname="com.aula.nativeapp.LiveConversationSessionTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
