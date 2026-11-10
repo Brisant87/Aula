@@ -15,7 +15,7 @@ class EnhancementContentTest {
 
     @Test
     fun `lab series are complete and uniquely identified`() {
-        assertEquals(9, LAB_SETS.size)
+        assertEquals(11, LAB_SETS.size)
         assertEquals(LAB_SETS.size, LAB_SETS.map { it.id }.distinct().size)
         for (set in LAB_SETS) {
             assertTrue("set ${set.id} needs >= 5 items", set.items.size >= 5)
