@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LiveMirrorWiringTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-09T16:18:43.174Z" hostname="htch-runtime" time="0.012">
+<testsuite name="com.aula.nativeapp.LiveMirrorWiringTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-10T14:44:11.880Z" hostname="htch-runtime" time="0.012">
   <properties/>
-  <testcase name="a suspect word adds exactly one family event in the live context" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.002"/>
+  <testcase name="a suspect word adds exactly one family event in the live context" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.003"/>
   <testcase name="the phantom-E family gate - s initial, never sh" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.002"/>
-  <testcase name="two suspects in one turn add two family events" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
-  <testcase name="a clean graded turn writes exactly one conversation_turn event" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.002"/>
-  <testcase name="a dismissed family pattern is never named" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
-  <testcase name="qualification is reachable from live plus guide event shapes" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.002"/>
-  <testcase name="live shapes alone never qualify - one context is not enough" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
+  <testcase name="two suspects in one turn add two family events" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
+  <testcase name="a clean graded turn writes exactly one conversation_turn event" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
+  <testcase name="a dismissed family pattern is never named" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
+  <testcase name="qualification is reachable from live plus guide event shapes" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
+  <testcase name="live shapes alone never qualify - one context is not enough" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
   <testcase name="aimed practice for the family pattern routes to the guide word sister" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
-  <testcase name="the family pattern has real transfer items" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
+  <testcase name="the family pattern has real transfer items" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
   <testcase name="correct events never count toward naming" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.0"/>
   <testcase name="fewer than three errors never qualify even across two contexts" classname="com.aula.nativeapp.LiveMirrorWiringTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
