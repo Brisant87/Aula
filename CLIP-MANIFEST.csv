@@ -493,3 +493,78 @@ Mysterious,voice/cog_mysterious.mp3,cog
 "red","v_lab_red.mp3","Helio (avocado_v2:MAI_03)","lab"
 "right","v_lab_right.mp3","Helio (avocado_v2:MAI_03)","lab"
 "car","v_lab_car.mp3","Helio (avocado_v2:MAI_03)","lab"
+Error,voice/cog_error.mp3,cog
+Canal,voice/cog_canal.mp3,cog
+Motor,voice/cog_motor.mp3,cog
+Festival,voice/cog_festival.mp3,cog
+Station,voice/cog_station.mp3,cog
+Tradition,voice/cog_tradition.mp3,cog
+Position,voice/cog_position.mp3,cog
+Ability,voice/cog_ability.mp3,cog
+Variety,voice/cog_variety.mp3,cog
+Recently,voice/cog_recently.mp3,cog
+Absolutely,voice/cog_absolutely.mp3,cog
+Glorious,voice/cog_glorious.mp3,cog
+Religious,voice/cog_religious.mp3,cog
+Assist,voice/cog_assist.mp3,cog
+Good morning! Can I help you?,voice/conv_good_morning_can_i_help_you.mp3,conv
+One way or round trip?,voice/conv_one_way_or_round_trip.mp3,conv
+The train leaves at nine from platform two.,voice/conv_the_train_leaves_at_nine_from_platform_two.mp3,conv
+"Yes, please. I would like a ticket to Miami.",voice/model_yes_please_i_would_like_a_ticket_to_miami.mp3,model
+"Round trip, please.",voice/model_round_trip_please.mp3,model
+Thank you very much. Have a nice day!,voice/model_thank_you_very_much_have_a_nice_day.mp3,model
+The next train to Miami leaves at nine. Is that good for you?,voice/live_the_next_train_to_miami_leaves_at_nine_is_th.mp3,live
+"One way, or round trip?",voice/live_one_way_or_round_trip.mp3,live
+That is twenty dollars. How would you like to pay?,voice/live_that_is_twenty_dollars_how_would_you_like_to.mp3,live
+"Your train is on platform two, on the right.",voice/live_your_train_is_on_platform_two_on_the_right.mp3,live
+"I am sorry, that train is twenty minutes late today.",voice/live_i_am_sorry_that_train_is_twenty_minutes_late.mp3,live
+Do you need help with your suitcase?,voice/live_do_you_need_help_with_your_suitcase.mp3,live
+Is this your first time taking the train here?,voice/live_is_this_your_first_time_taking_the_train_her.mp3,live
+Would you like a window seat?,voice/live_would_you_like_a_window_seat.mp3,live
+"There is a small café on platform one, if you are thirsty.",voice/live_there_is_a_small_cafe_on_platform_one_if_you.mp3,live
+Your train leaves at nine from platform two. Have a great trip!,voice/live_your_train_leaves_at_nine_from_platform_two.mp3,live
+"I would like a ticket to Miami, please.",voice/model_i_would_like_a_ticket_to_miami_please.mp3,model
+"Yes, nine is fine, thank you.",voice/model_yes_nine_is_fine_thank_you.mp3,model
+"Platform two, on the right. Thank you!",voice/model_platform_two_on_the_right_thank_you.mp3,model
+No problem. I will wait here.,voice/model_no_problem_i_will_wait_here.mp3,model
+"Yes, please. A window seat.",voice/model_yes_please_a_window_seat.mp3,model
+"Thank you, that is kind.",voice/model_thank_you_that_is_kind.mp3,model
+Hi! Welcome to the party. Come in!,voice/conv_hi_welcome_to_the_party_come_in.mp3,conv
+Would you like something to drink?,voice/conv_would_you_like_something_to_drink.mp3,conv
+The cake is ready. Do you want a piece?,voice/conv_the_cake_is_ready_do_you_want_a_piece.mp3,conv
+Thank you! Happy birthday!,voice/model_thank_you_happy_birthday.mp3,model
+"Yes, please. A glass of juice.",voice/model_yes_please_a_glass_of_juice.mp3,model
+"Yes, please. It looks delicious.",voice/model_yes_please_it_looks_delicious.mp3,model
+"Oh, you brought flowers! They are beautiful.",voice/live_oh_you_brought_flowers_they_are_beautiful.mp3,live
+"We have juice, soda, and water. What would you like?",voice/live_we_have_juice_soda_and_water_what_would_you.mp3,live
+The chocolate cake is ready. Do you want a big piece?,voice/live_the_chocolate_cake_is_ready_do_you_want_a_bi.mp3,live
+Do you like this music? It is my favorite song.,voice/live_do_you_like_this_music_it_is_my_favorite_son.mp3,live
+How old do you think I am today?,voice/live_how_old_do_you_think_i_am_today.mp3,live
+Let's take a photo together by the cake!,voice/live_let_s_take_a_photo_together_by_the_cake.mp3,live
+Do you know many people at the party?,voice/live_do_you_know_many_people_at_the_party.mp3,live
+The party started at seven. Are you having fun?,voice/live_the_party_started_at_seven_are_you_having_fu.mp3,live
+"Can you help me with the chairs, please?",voice/live_can_you_help_me_with_the_chairs_please.mp3,live
+Thank you for coming to my party!,voice/live_thank_you_for_coming_to_my_party.mp3,live
+Thank you for coming! I am glad you had fun. See you soon!,voice/live_thank_you_for_coming_i_am_glad_you_had_fun_s.mp3,live
+They are for you. Happy birthday!,voice/model_they_are_for_you_happy_birthday.mp3,model
+"A glass of juice, please.",voice/model_a_glass_of_juice_please.mp3,model
+"Yes, please. I love chocolate cake.",voice/model_yes_please_i_love_chocolate_cake.mp3,model
+"Yes, I like it very much.",voice/model_yes_i_like_it_very_much.mp3,model
+"Twenty-five, of course!",voice/model_twenty_five_of_course.mp3,model
+Yes! Let's take a photo.,voice/model_yes_let_s_take_a_photo.mp3,model
+"Yes, I know your sister and your brother.",voice/model_yes_i_know_your_sister_and_your_brother.mp3,model
+"Yes, I am having a lot of fun.",voice/model_yes_i_am_having_a_lot_of_fun.mp3,model
+"Of course, I can help you.",voice/model_of_course_i_can_help_you.mp3,model
+Thank you for inviting me. Goodbye!,voice/model_thank_you_for_inviting_me_goodbye.mp3,model
+cats,v_lab_cats.mp3,Helio (avocado_v2:MAI_03),lab
+books,v_lab_books.mp3,Helio (avocado_v2:MAI_03),lab
+dogs,v_lab_dogs.mp3,Helio (avocado_v2:MAI_03),lab
+days,v_lab_days.mp3,Helio (avocado_v2:MAI_03),lab
+buses,v_lab_buses.mp3,Helio (avocado_v2:MAI_03),lab
+watches,v_lab_watches.mp3,Helio (avocado_v2:MAI_03),lab
+jam,v_lab_jam.mp3,Helio (avocado_v2:MAI_03),lab
+juice,v_lab_juice.mp3,Helio (avocado_v2:MAI_03),lab
+job,v_lab_job.mp3,Helio (avocado_v2:MAI_03),lab
+July,v_lab_july.mp3,Helio (avocado_v2:MAI_03),lab
+enjoy,v_lab_enjoy.mp3,Helio (avocado_v2:MAI_03),lab
+orange,v_lab_orange.mp3,Helio (avocado_v2:MAI_03),lab
