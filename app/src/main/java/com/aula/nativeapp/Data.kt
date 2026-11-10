@@ -5,10 +5,11 @@ package com.aula.nativeapp
  *
  * Ported from the web app (~/workspace/aula-apk/app-assets/index.html).
  * Content: all 17 syntax items, the transfer pool (incl. la familia de la
- * «e» fantasma), all 86 cognates (46 originals + 12 from the Puente harvest
- * + 14 from the v0.15 deepening + 14 from the v0.17 deepening; Hotel and
+ * «e» fantasma), all 100 cognates (46 originals + 12 from the Puente harvest
+ * + 14 from the v0.15 deepening + 14 from the v0.17 deepening + 14 from the
+ * v0.18 deepening; Hotel and
  * Taxi were already here), 21 guide
- * words (the web app's 20 + sister), all 13 conversations, all 6 listening
+ * words (the web app's 20 + sister), all 15 conversations, all 6 listening
  * items, 13 formulas, 6 cognate rules, 7 day plans and the 4 Camino levels.
  */
 
@@ -172,7 +173,21 @@ val COGNATES: List<Cognate> = listOf(
     Cognate("Society", "Sociedad", "dad", "so-SÁI-e-ti", "We live in a society.", "-dad se convierte en -ty."),
     Cognate("Especially", "Especialmente", "mente", "es-PÉ-sha-li", "I especially like the music.", "-mente se convierte en -ly; la «c» suena «sh»."),
     Cognate("Probably", "Probablemente", "mente", "PRÁ-ba-bli", "It will probably rain today.", "-mente se convierte en -ly."),
-    Cognate("Mysterious", "Misterioso", "oso", "mis-TÍ-ri-os", "It was a mysterious noise.", "-oso se convierte en -ous.")
+    Cognate("Mysterious", "Misterioso", "oso", "mis-TÍ-ri-os", "It was a mysterious noise.", "-oso se convierte en -ous."),
+    Cognate("Error", "Error", "perfectos", "É-ror", "It was a small error.", "Se escribe igual; suena «éror», con la primera sílaba fuerte."),
+    Cognate("Canal", "Canal", "perfectos", "kuh-NÁL", "The boat crossed the canal.", "Se escribe igual; en inglés el énfasis va al final."),
+    Cognate("Motor", "Motor", "perfectos", "MÓU-tor", "The motor is new.", "Idéntica escrita; la «t» suena suave, casi «r»."),
+    Cognate("Festival", "Festival", "perfectos", "FÉS-ti-vol", "The festival is in June.", "Se escribe igual; el énfasis va al principio."),
+    Cognate("Station", "Estación", "cion", "STÉI-shon", "The station is near the park.", "-ción se convierte en -tion."),
+    Cognate("Tradition", "Tradición", "cion", "tra-DÍ-shon", "It is a family tradition.", "-ción se convierte en -tion."),
+    Cognate("Position", "Posición", "cion", "po-SÍ-shon", "Take a comfortable position.", "-ción se convierte en -tion."),
+    Cognate("Ability", "Habilidad", "dad", "a-BÍ-li-ti", "She has a great ability to learn.", "-dad se convierte en -ty; pierde la «h» inicial."),
+    Cognate("Variety", "Variedad", "dad", "va-RÁI-e-ti", "The market has a great variety of fruit.", "-dad se convierte en -ty."),
+    Cognate("Recently", "Recientemente", "mente", "RÍ-sent-li", "I moved here recently.", "-mente se convierte en -ly."),
+    Cognate("Absolutely", "Absolutamente", "mente", "ab-so-LÚT-li", "You are absolutely right.", "-mente se convierte en -ly."),
+    Cognate("Glorious", "Glorioso", "oso", "GLÓ-ri-os", "It was a glorious day.", "-oso se convierte en -ous."),
+    Cognate("Religious", "Religioso", "oso", "ri-LÍ-yos", "It is a religious celebration.", "-oso se convierte en -ous."),
+    Cognate("Assist", "Ayudar", "falsos", "a-SÍST", "Can I assist you with your bags?", "¡Trampa! «Assist» es «ayudar»; «asistir» a un evento es «attend».")
 )
 
 val RULES: List<RuleInfo> = listOf(
@@ -676,6 +691,34 @@ val CONVERSATIONS: List<Conversation> = listOf(
             ConvOption("Yes, please. Tell him Alex called.", true, "conversation_turn"),
             ConvOption("Message take you can yes.", false, "syntax_word_order"),
             ConvOption("Tell called Alex him please.", false, "syntax_word_order")), "«Take a message» = tomar un recado; el recado va en pasado: «Alex called» = llamó Alex.")
+    )),
+    Conversation("estacion", "En la estación de tren", "Postal · Viaje", listOf(
+        ConvTurn("El empleado", "Good morning! Can I help you?", listOf(
+            ConvOption("Yes, please. I would like a ticket to Miami.", true, "conversation_turn"),
+            ConvOption("I ticket Miami want please.", false, "syntax_word_order"),
+            ConvOption("Ticket to Miami is I.", false, "syntax_word_order")), "«I would like a ticket» = quiero un boleto; la fórmula cortés también compra boletos."),
+        ConvTurn("El empleado", "One way or round trip?", listOf(
+            ConvOption("Round trip, please.", true, "conversation_turn"),
+            ConvOption("Trip round is yesterday.", false, "conversation_turn"),
+            ConvOption("Please round I trip.", false, "syntax_word_order")), "«Round trip» = ida y vuelta; «one way» = solo ida."),
+        ConvTurn("El empleado", "The train leaves at nine from platform two.", listOf(
+            ConvOption("Thank you very much. Have a nice day!", true, "conversation_turn"),
+            ConvOption("Thanks you very many.", false, "syntax_word_order"),
+            ConvOption("Platform two go I now.", false, "syntax_word_order")), "«Platform» = el andén; cierra con la cortesía completa.")
+    )),
+    Conversation("cumpleanos", "Un cumpleaños", "Postal · Nivel 1", listOf(
+        ConvTurn("Sofía", "Hi! Welcome to the party. Come in!", listOf(
+            ConvOption("Thank you! Happy birthday!", true, "conversation_turn"),
+            ConvOption("Thank, birthday happy you.", false, "syntax_word_order"),
+            ConvOption("Party I in come yes.", false, "syntax_word_order")), "«Happy birthday» = feliz cumpleaños: la frase llega tal cual, sin traducir."),
+        ConvTurn("Sofía", "Would you like something to drink?", listOf(
+            ConvOption("Yes, please. A glass of juice.", true, "conversation_turn"),
+            ConvOption("Juice glass please a.", false, "syntax_word_order"),
+            ConvOption("Drink I yes something.", false, "syntax_word_order")), "«A glass of juice» = un vaso de jugo; artículo + cosa + «of» + contenido."),
+        ConvTurn("Sofía", "The cake is ready. Do you want a piece?", listOf(
+            ConvOption("Yes, please. It looks delicious.", true, "conversation_turn"),
+            ConvOption("Cake piece yes I delicious is.", false, "syntax_word_order"),
+            ConvOption("Want piece I, cake is yesterday.", false, "conversation_turn")), "«A piece of cake» = un pedazo de pastel; «delicious» es el cognado de «delicioso».")
     ))
 )
 
@@ -873,6 +916,34 @@ val LAB_SETS: List<LabSet> = listOf(
             LabItem("car", "carro / coche", "La «r» final se oye, redonda y suave: «carrr». En EE. UU. no se calla.", "Una r final suave y clara: «car»."),
             LabItem("water", "agua", "La «r» final es el sonido más flojo de la palabra: lengua curvada y casi un suspiro.", "Cierre suave con r: «water»."),
             LabItem("three", "tres", "Después del soplido «th», la lengua se curva hacia atrás para la r: «th-rrr-ii».", "«three» con la r redonda, sin vibrar.")
+        )
+    ),
+    LabSet(
+        id = "plurales",
+        title = "Finales -s: los plurales",
+        focusEs = "El plural con -s suena de tres maneras: /s/, /z/ o una sílaba entera /iz/. La regla se oye, igual que con -ed: tras un sonido sin voz sale /s/; tras un sonido con voz, /z/; y tras s, x, ch o sh se añade una sílaba completa.",
+        patternKey = null,
+        items = listOf(
+            LabItem("cats", "gatos", "Termina en un silbido seco y sin voz: «cats». La s final no vibra.", "Un silbido final sin vibración: «cats»."),
+            LabItem("books", "libros", "La misma s seca de cats: «books», un solo golpe.", "s seca al final: «books»."),
+            LabItem("dogs", "perros", "Aquí la s final SÍ vibra, como una z: «dogz». La garganta zumba.", "Una z vibrada al final: «dogs»."),
+            LabItem("days", "días", "La s suena z tras la vocal: «deiz». Corta y vibrada.", "z final clara: «days»."),
+            LabItem("buses", "autobuses", "Aquí SÍ hay sílaba extra: «bu-ses», porque la palabra base termina en s.", "Dos sílabas claras: «buses»."),
+            LabItem("watches", "relojes", "También dos sílabas: «wa-ches», la base termina en ch.", "Dos sílabas: «watches».")
+        )
+    ),
+    LabSet(
+        id = "jota",
+        title = "La «j» inglesa",
+        focusEs = "La «j» inglesa no es la jota española: es un sonido con golpe y vibración, como una «d» y una «ch» pegadas: «dch». Nunca se sopla; la garganta vibra desde el primer instante.",
+        patternKey = null,
+        items = listOf(
+            LabItem("jam", "mermelada", "Arranca con un golpe vibrado: «dch-am». Nada de soplar como la jota española.", "Un golpe con voz: «jam», no «ham»."),
+            LabItem("juice", "jugo", "El mismo golpe al principio y la vocal larga: «dch-uus».", "Golpe vibrado y u larga: «juice»."),
+            LabItem("job", "trabajo", "Golpe vibrado y corte seco al final: «dch-ob».", "«job» con la j de verdad, no «hob»."),
+            LabItem("July", "julio", "La j inicial vibra y el golpe fuerte cae en la segunda parte: «dchu-LAI».", "La j vibrada al arrancar: «July»."),
+            LabItem("enjoy", "disfrutar", "La j del medio también vibra entre las dos partes: «en-DCH-oi».", "La vibración en el centro: «enjoy»."),
+            LabItem("orange", "naranja", "Termina en el mismo sonido «dch», suave y vibrado: «Ó-rench».", "Cierre vibrado: «orange».")
         )
     )
 )
