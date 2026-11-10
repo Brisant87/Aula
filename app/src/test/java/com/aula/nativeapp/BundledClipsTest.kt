@@ -50,7 +50,7 @@ class BundledClipsTest {
 
     @Test
     fun `clip map is complete and well formed`() {
-        assertEquals(494, BundledClips.size)
+        assertEquals(569, BundledClips.size)
         val paths = BundledClips.assetPaths()
         assertEquals(BundledClips.size, paths.size) // no two texts share a file
         for (p in paths) {
