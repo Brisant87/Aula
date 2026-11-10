@@ -646,6 +646,8 @@ object LiveConversationBanks {
         "banco" -> banco
         "tienda" -> tienda
         "telefono" -> telefono
+        "estacion" -> estacion
+        "cumpleanos" -> cumpleanos
         else -> null
     }
 
@@ -2649,6 +2651,308 @@ object LiveConversationBanks {
             )
         ),
         wrapUpLine = "Your appointment is confirmed for Friday. Thank you for calling, and goodbye!"
+    )
+
+    // ---------------------------------------------------------- estación de tren
+
+    private val estacion = LiveBank(
+        conversationId = "estacion",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Good morning! Can I help you?",
+            objectiveEs = "Pide un boleto de tren con la forma cortés: «I would like a ticket to…».",
+            modelReplies = listOf(
+                "I would like a ticket to Miami, please.",
+                "Yes, please. I would like a ticket to Miami."
+            ),
+            targetKeywords = listOf("would", "like", "ticket", "please"),
+            clarityTipEs = "«Ticket» = boleto; la fórmula cortés sirve también en la estación."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_time",
+                    partnerLine = "The next train to Miami leaves at nine. Is that good for you?",
+                    objectiveEs = "Confirma el tren de las nueve o pregunta por uno más tarde.",
+                    modelReplies = listOf(
+                        "Yes, nine is fine, thank you.",
+                        "Is there a later train?"
+                    ),
+                    targetKeywords = listOf("nine", "fine", "later", "train"),
+                    clarityTipEs = "«Later» = más tarde; la pregunta completa abre con «Is there…?»."
+                ),
+                triggerKeywords = listOf("train", "nine", "time", "leave", "when")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_roundtrip",
+                    partnerLine = "One way, or round trip?",
+                    objectiveEs = "Di que quieres el boleto de ida y vuelta.",
+                    modelReplies = listOf(
+                        "Round trip, please.",
+                        "A round trip ticket, please."
+                    ),
+                    targetKeywords = listOf("round", "trip", "please"),
+                    clarityTipEs = "«Round trip» = ida y vuelta: la frase va en ese orden fijo."
+                ),
+                triggerKeywords = listOf("round", "trip", "way", "return")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_price",
+                    partnerLine = "That is twenty dollars. How would you like to pay?",
+                    objectiveEs = "Di cómo vas a pagar: con tarjeta.",
+                    modelReplies = listOf(
+                        "By card, please.",
+                        "With a card, please."
+                    ),
+                    targetKeywords = listOf("card", "please"),
+                    clarityTipEs = "«By card» = con tarjeta: corto y completo."
+                ),
+                triggerKeywords = listOf("pay", "card", "cash", "dollar", "price")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_platform",
+                    partnerLine = "Your train is on platform two, on the right.",
+                    objectiveEs = "Confirma el andén dos y agradece.",
+                    modelReplies = listOf(
+                        "Platform two, on the right. Thank you!",
+                        "Thank you. Platform two."
+                    ),
+                    targetKeywords = listOf("platform", "two", "thank"),
+                    clarityTipEs = "«Platform» = el andén; repetir el dato confirma que lo oíste bien."
+                ),
+                triggerKeywords = listOf("platform", "track", "where", "gate")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_late",
+                    partnerLine = "I am sorry, that train is twenty minutes late today.",
+                    objectiveEs = "Responde con calma: no hay problema, vas a esperar.",
+                    modelReplies = listOf(
+                        "No problem. I will wait here.",
+                        "That is fine, thank you."
+                    ),
+                    targetKeywords = listOf("problem", "wait", "fine"),
+                    clarityTipEs = "«Late» = con retraso; «I will wait» = esperaré."
+                ),
+                triggerKeywords = listOf("late", "delay", "wait", "problem")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_bag",
+                    partnerLine = "Do you need help with your suitcase?",
+                    objectiveEs = "Acepta la ayuda con tu maleta pesada.",
+                    modelReplies = listOf(
+                        "Yes, please. My suitcase is heavy.",
+                        "Yes, thank you. It is very heavy."
+                    ),
+                    targetKeywords = listOf("please", "suitcase", "heavy"),
+                    clarityTipEs = "«Suitcase» arranca con /s/ directa, sin vocal antes: nada de «esuitcase».",
+                    trapWords = listOf("suitcase")
+                ),
+                triggerKeywords = listOf("bag", "suitcase", "help", "heavy", "luggage")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_first",
+                partnerLine = "Is this your first time taking the train here?",
+                objectiveEs = "Di si es tu primera vez en esta estación.",
+                modelReplies = listOf(
+                    "Yes, it is my first time here.",
+                    "No, I travel every week."
+                ),
+                targetKeywords = listOf("first", "time", "travel"),
+                clarityTipEs = "«First time» = primera vez; la frase va entera."
+            ),
+            LivePrompt(
+                id = "g_seat",
+                partnerLine = "Would you like a window seat?",
+                objectiveEs = "Di si quieres el asiento de la ventana.",
+                modelReplies = listOf(
+                    "Yes, please. A window seat.",
+                    "No, thank you. Any seat is fine."
+                ),
+                targetKeywords = listOf("window", "seat", "please"),
+                clarityTipEs = "«Window seat» = asiento de ventana."
+            ),
+            LivePrompt(
+                id = "g_food",
+                partnerLine = "There is a small café on platform one, if you are thirsty.",
+                objectiveEs = "Agradece el dato del café de la estación.",
+                modelReplies = listOf(
+                    "Thank you, that is kind.",
+                    "Great, I would like a coffee."
+                ),
+                targetKeywords = listOf("thank", "kind", "coffee"),
+                clarityTipEs = "«Thirsty» = con sed; «kind» = amable."
+            ),
+            LivePrompt(
+                id = "g_bye",
+                partnerLine = "Is there anything else I can do for you?",
+                objectiveEs = "Cierra la conversación con cortesía.",
+                modelReplies = listOf(
+                    "That is all, thank you very much.",
+                    "No, that is all. Goodbye!"
+                ),
+                targetKeywords = listOf("all", "thank", "goodbye"),
+                clarityTipEs = "El cierre de siempre: «That is all, thank you»."
+            )
+        ),
+        wrapUpLine = "Your train leaves at nine from platform two. Have a great trip!"
+    )
+
+    // ---------------------------------------------------------- cumpleaños
+
+    private val cumpleanos = LiveBank(
+        conversationId = "cumpleanos",
+        opening = LivePrompt(
+            id = "opening",
+            partnerLine = "Hi! Welcome to the party. Come in!",
+            objectiveEs = "Agradece la invitación y felicita: «Happy birthday!».",
+            modelReplies = listOf(
+                "Thank you! Happy birthday!",
+                "Thank you very much. Happy birthday!"
+            ),
+            targetKeywords = listOf("thank", "happy", "birthday"),
+            clarityTipEs = "«Happy birthday» se dice tal cual: no se traduce palabra por palabra."
+        ),
+        branches = listOf(
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_gift",
+                    partnerLine = "Oh, you brought flowers! They are beautiful.",
+                    objectiveEs = "Di que las flores son un regalo para ella.",
+                    modelReplies = listOf(
+                        "They are for you. Happy birthday!",
+                        "Yes, a small gift for you."
+                    ),
+                    targetKeywords = listOf("for", "you", "gift", "birthday"),
+                    clarityTipEs = "«For you» = para ti; «gift» = regalo."
+                ),
+                triggerKeywords = listOf("gift", "flowers", "present", "brought")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_drink",
+                    partnerLine = "We have juice, soda, and water. What would you like?",
+                    objectiveEs = "Elige algo de beber: un vaso de jugo.",
+                    modelReplies = listOf(
+                        "A glass of juice, please.",
+                        "Juice, please. Thank you!"
+                    ),
+                    targetKeywords = listOf("juice", "please"),
+                    clarityTipEs = "«Juice» = jugo, con la «j» vibrada; «soda» = refresco."
+                ),
+                triggerKeywords = listOf("drink", "juice", "soda", "thirsty", "water")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_cake",
+                    partnerLine = "The chocolate cake is ready. Do you want a big piece?",
+                    objectiveEs = "Acepta un pedazo grande de pastel de chocolate.",
+                    modelReplies = listOf(
+                        "Yes, please. I love chocolate cake.",
+                        "A big piece, please. It looks delicious."
+                    ),
+                    targetKeywords = listOf("cake", "please", "chocolate", "delicious"),
+                    clarityTipEs = "«Delicious» = delicioso: un cognado perfecto, úsalo."
+                ),
+                triggerKeywords = listOf("cake", "piece", "chocolate", "eat")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_music",
+                    partnerLine = "Do you like this music? It is my favorite song.",
+                    objectiveEs = "Di que te gusta la música de la fiesta.",
+                    modelReplies = listOf(
+                        "Yes, I like it very much.",
+                        "It is great music. I love it."
+                    ),
+                    targetKeywords = listOf("like", "music", "love"),
+                    clarityTipEs = "«I like it» = me gusta: sujeto, verbo y «it», sin más."
+                ),
+                triggerKeywords = listOf("music", "song", "dance", "listen")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_age",
+                    partnerLine = "How old do you think I am today?",
+                    objectiveEs = "Adivina su edad con cortesía: veinticinco.",
+                    modelReplies = listOf(
+                        "Twenty-five, of course!",
+                        "You look twenty-five today."
+                    ),
+                    targetKeywords = listOf("twenty", "five"),
+                    clarityTipEs = "Los números compuestos se unen: «twenty-five»."
+                ),
+                triggerKeywords = listOf("old", "age", "years", "young")
+            ),
+            LiveBranch(
+                prompt = LivePrompt(
+                    id = "b_photo",
+                    partnerLine = "Let's take a photo together by the cake!",
+                    objectiveEs = "Acepta la foto junto al pastel.",
+                    modelReplies = listOf(
+                        "Yes! Let's take a photo.",
+                        "Great idea. Smile!"
+                    ),
+                    targetKeywords = listOf("photo", "smile", "yes"),
+                    clarityTipEs = "«Let's» = vamos a…; «smile» = sonríe."
+                ),
+                triggerKeywords = listOf("photo", "picture", "camera", "smile")
+            )
+        ),
+        generics = listOf(
+            LivePrompt(
+                id = "g_people",
+                partnerLine = "Do you know many people at the party?",
+                objectiveEs = "Di a quién conoces en la fiesta.",
+                modelReplies = listOf(
+                    "Yes, I know your sister and your brother.",
+                    "Only a few people."
+                ),
+                targetKeywords = listOf("know", "sister", "brother", "people"),
+                clarityTipEs = "«Sister» arranca con /s/ directa, sin vocal antes: nada de «esister».",
+                trapWords = listOf("sister")
+            ),
+            LivePrompt(
+                id = "g_time",
+                partnerLine = "The party started at seven. Are you having fun?",
+                objectiveEs = "Di que te lo estás pasando muy bien.",
+                modelReplies = listOf(
+                    "Yes, I am having a lot of fun.",
+                    "Yes, it is a great party."
+                ),
+                targetKeywords = listOf("fun", "party", "great"),
+                clarityTipEs = "«Having fun» = pasándolo bien: la frase va entera."
+            ),
+            LivePrompt(
+                id = "g_help",
+                partnerLine = "Can you help me with the chairs, please?",
+                objectiveEs = "Ofrece tu ayuda con las sillas.",
+                modelReplies = listOf(
+                    "Of course, I can help you.",
+                    "Yes, of course. Where do they go?"
+                ),
+                targetKeywords = listOf("help", "course"),
+                clarityTipEs = "«Of course» = por supuesto: la respuesta amable por defecto."
+            ),
+            LivePrompt(
+                id = "g_bye",
+                partnerLine = "Thank you for coming to my party!",
+                objectiveEs = "Despídete y agradece la invitación.",
+                modelReplies = listOf(
+                    "Thank you for inviting me. Goodbye!",
+                    "It was a great party. See you soon!"
+                ),
+                targetKeywords = listOf("thank", "inviting", "goodbye", "soon"),
+                clarityTipEs = "«See you soon» = hasta pronto: la despedida cálida."
+            )
+        ),
+        wrapUpLine = "Thank you for coming! I am glad you had fun. See you soon!"
     )
 
 }
