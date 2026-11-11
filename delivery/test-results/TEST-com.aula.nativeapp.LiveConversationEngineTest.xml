@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LiveConversationEngineTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:01:36.511Z" hostname="htch-runtime" time="0.111">
+<testsuite name="com.aula.nativeapp.LiveConversationEngineTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-11T07:51:34.540Z" hostname="htch-runtime" time="0.104">
   <properties/>
-  <testcase name="a used branch is never served again - the next hit wins" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.005"/>
+  <testcase name="a used branch is never served again - the next hit wins" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.004"/>
   <testcase name="a transcript hitting a branch trigger serves that branch" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.0"/>
   <testcase name="bank exhaustion wraps up before the goal" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.001"/>
-  <testcase name="no trigger hit falls back to the first unused generic, anchored to the scene" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.002"/>
-  <testcase name="every target keyword is matchable against its own prompt model replies" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.031"/>
-  <testcase name="trigger matching uses the scorer stem semantics" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.06"/>
-  <testcase name="every conversation has a complete live bank and the opening reuses the guided first line" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.004"/>
+  <testcase name="no trigger hit falls back to the first unused generic, anchored to the scene" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.001"/>
+  <testcase name="every target keyword is matchable against its own prompt model replies" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.091"/>
+  <testcase name="trigger matching uses the scorer stem semantics" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.001"/>
+  <testcase name="every conversation has a complete live bank and the opening reuses the guided first line" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.005"/>
   <testcase name="selection is deterministic - same inputs, same prompt" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.0"/>
   <testcase name="the exchange goal wraps up regardless of remaining bank" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.0"/>
-  <testcase name="when generics run out the partner steers to an unused branch" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.001"/>
+  <testcase name="when generics run out the partner steers to an unused branch" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.0"/>
   <testcase name="an unknown conversation has no bank" classname="com.aula.nativeapp.LiveConversationEngineTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
