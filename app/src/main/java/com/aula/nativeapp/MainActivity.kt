@@ -3338,13 +3338,15 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.19", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.20", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
             Spacer(Modifier.height(6.dp))
             NoteText("El oído propio: si el reconocedor del teléfono no transcribe nada, Aula puede escuchar tu grabación con su propio motor de voz, dentro del teléfono y sin internet. Cuando lo usa, te lo dice en la misma respuesta.")
             Spacer(Modifier.height(6.dp))
             NoteText("Traducción Viva (en la Biblioteca): las frases de su banco se traducen en el propio teléfono y nunca salen de él. Solo si escribes una frase que no está en el banco y tienes tu clave guardada, esa frase se envía a Google Cloud Translation para traducirla, con la misma clave de la voz IA; sin clave, Traducción Viva se queda en el banco.")
+            Spacer(Modifier.height(6.dp))
+            NoteText("El banco grande de palabras de Traducción Viva se construyó a partir de Wiktionary, el diccionario libre escrito por sus colaboradores (licencia CC BY-SA), y el orden de las palabras más usadas viene de la lista de frecuencias de OpenSubtitles (FrequencyWords, licencia MIT).")
             Spacer(Modifier.height(6.dp))
             Text("Créditos de código abierto", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
