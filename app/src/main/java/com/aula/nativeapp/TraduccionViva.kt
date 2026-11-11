@@ -1,27 +1,39 @@
 package com.aula.nativeapp
 
+import android.content.Context
 import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.text.Normalizer
+import java.util.concurrent.atomic.AtomicBoolean
 
 /*
- * Traducción Viva (v0.19) — the testers' ask: the learner writes a
- * word or phrase and gets back how a native speaker actually says
- * it day to day, with its voice — not a literal, robotic rendering.
+ * Traducción Viva (v0.19, banco grande v0.20) — the testers' ask:
+ * the learner writes a word or phrase and gets back how a native
+ * speaker actually says it day to day, with its voice — not a
+ * literal, robotic rendering.
  *
- * Two layers, in order:
+ * Three layers, in order:
  *
- * 1. THE BANK (this file): everyday Spanish phrases mapped to
- *    hand-written NATURAL English — "tengo hambre" is "I'm hungry",
- *    never "I have hunger". A bank hit is instant, offline and
- *    key-free, and it is the heart of the "not literal" promise.
+ * 1. THE CURATED BANK (this file): everyday Spanish phrases mapped
+ *    to hand-written NATURAL English — "tengo hambre" is "I'm
+ *    hungry", never "I have hunger". A bank hit is instant, offline
+ *    and key-free, and it is the heart of the "not literal" promise.
  *    The same bank also answers in reverse (type the English side,
  *    get the Spanish).
  *
- * 2. THE CLOUD, only for phrases outside the bank: Google Cloud
+ * 2. THE BIG LEXICON (assets/traduccion_bank.tsv, v0.20): 50,000
+ *    Spanish words and phrases with their English equivalents,
+ *    built from the free dictionary Wiktionary (CC BY-SA) and
+ *    ordered by the OpenSubtitles frequency list, so the words
+ *    people actually use resolve offline too. It loads lazily in
+ *    the background; the curated bank keeps its priority — where
+ *    both know a phrase, the hand-written rendering wins.
+ *
+ * 3. THE CLOUD, only for what neither bank knows: Google Cloud
  *    Translation API v2 over plain REST, with the learner's OWN
  *    Google Cloud key — the same key Ajustes already stores for
  *    the cloud voice (VoiceKeyStore). No new key, no account, no
@@ -154,6 +166,101 @@ fun buscarEnBanco(texto: String): HallazgoBanco? {
     return null
 }
 
+// ------------------------------------------------------------------ lexicon
+
+/**
+ * The big lexicon (v0.20): assets/traduccion_bank.tsv, one entry
+ * per line — normalized Spanish key, TAB, the Spanish as written,
+ * TAB, the English equivalent. Built from Wiktionary (CC BY-SA),
+ * ordered by the OpenSubtitles frequency list; Ajustes carries
+ * the credit line.
+ *
+ * It loads ONCE, lazily, off the main thread: parsing 50,000 lines
+ * must never block the learner. Until the load lands, lookups here
+ * simply miss — the curated bank answers instantly as always, and
+ * a lexicon-only word may fall through to the cloud path.
+ */
+object BancoLexico {
+    private const val ASSET = "traduccion_bank.tsv"
+
+    @Volatile
+    private var porEspanol: Map<String, FraseViva>? = null
+
+    @Volatile
+    private var porIngles: Map<String, FraseViva>? = null
+
+    private val cargando = AtomicBoolean(false)
+
+    val cargado: Boolean
+        get() = porEspanol != null
+
+    /** Kick the load off (idempotent). Call from a background thread. */
+    fun cargar(context: Context) {
+        if (porEspanol != null) return
+        if (!cargando.compareAndSet(false, true)) return
+        try {
+            context.applicationContext.assets.open(ASSET).bufferedReader().use { reader ->
+                val (es, en) = parseBancoLexico(reader)
+                porIngles = en
+                porEspanol = es
+            }
+        } catch (e: Exception) {
+            // A lexicon that cannot load must never break the tool:
+            // the curated bank and the cloud keep working as before.
+        } finally {
+            cargando.set(false)
+        }
+    }
+
+    fun buscar(texto: String): HallazgoBanco? {
+        val es = porEspanol ?: return null
+        val en = porIngles ?: return null
+        val clave = normalizarFrase(texto)
+        if (clave.isEmpty()) return null
+        es[clave]?.let { return HallazgoBanco(it, entradaEnIngles = false) }
+        en[clave]?.let { return HallazgoBanco(it, entradaEnIngles = true) }
+        return null
+    }
+
+    /** Test hook: install (or clear, with nulls) prebuilt maps. */
+    internal fun instalarParaPruebas(
+        es: Map<String, FraseViva>?,
+        en: Map<String, FraseViva>?
+    ) {
+        porEspanol = es
+        porIngles = en
+    }
+}
+
+/**
+ * Parse the lexicon TSV into both lookup directions. Keys come
+ * pre-normalized from the file; the English side is normalized
+ * here, with the same rule the learner's typing gets. Malformed
+ * lines are skipped, never fatal. First entry wins a key, in both
+ * directions — the file is frequency-ordered by construction for
+ * its Spanish keys, so the winner is the commonest reading.
+ */
+fun parseBancoLexico(reader: BufferedReader): Pair<Map<String, FraseViva>, Map<String, FraseViva>> {
+    val es = LinkedHashMap<String, FraseViva>()
+    val en = LinkedHashMap<String, FraseViva>()
+    reader.forEachLine { linea ->
+        val partes = linea.split('\t')
+        if (partes.size == 3) {
+            val clave = partes[0]
+            val displayEs = partes[1]
+            val english = partes[2]
+            if (clave.isNotEmpty() && displayEs.isNotBlank() && english.isNotBlank()) {
+                val frase = FraseViva(displayEs, english)
+                es.putIfAbsent(clave, frase)
+                en.putIfAbsent(normalizarFrase(english), frase)
+            }
+        }
+    }
+    return es to en
+}
+
+fun buscarEnLexico(texto: String): HallazgoBanco? = BancoLexico.buscar(texto)
+
 // ------------------------------------------------------------------ states
 
 enum class VivaOrigen { BANCO, NUBE }
@@ -242,34 +349,40 @@ fun parseRespuestaTraduccion(json: String): RespuestaTraduccion? {
 private fun esIngles(idioma: String?): Boolean =
     idioma != null && (idioma.equals("en", ignoreCase = true) || idioma.startsWith("en-", ignoreCase = true))
 
+/** Build the shown translation for an offline hit, either tier. */
+private fun traduccionDeBanco(texto: String, hallazgo: HallazgoBanco): VivaEstado.Traduccion =
+    if (hallazgo.entradaEnIngles) {
+        VivaEstado.Traduccion(
+            original = texto,
+            traducida = hallazgo.frase.es,
+            paraEscuchar = hallazgo.frase.en,
+            origen = VivaOrigen.BANCO
+        )
+    } else {
+        VivaEstado.Traduccion(
+            original = texto,
+            traducida = hallazgo.frase.en,
+            paraEscuchar = hallazgo.frase.en,
+            origen = VivaOrigen.BANCO
+        )
+    }
+
 /**
- * The whole decision, pure and testable: bank first (instant, no
- * key, no network — [peticion] is never invoked), then the key
- * check, then the cloud. English input is detected by the first
- * call and translated back into Spanish by a second one; the
- * audio text is the English side either way.
+ * The whole decision, pure and testable: curated bank first, then
+ * the big lexicon (both instant, no key, no network — [peticion]
+ * is never invoked), then the key check, then the cloud. English
+ * input is detected by the first call and translated back into
+ * Spanish by a second one; the audio text is the English side
+ * either way.
  */
 fun resolverViva(textoCrudo: String, clave: String, peticion: PeticionTraduccion?): VivaEstado {
     val texto = textoCrudo.trim()
     if (texto.isEmpty()) return VivaEstado.Aviso(VivaFallo.VACIO)
 
-    buscarEnBanco(texto)?.let { hallazgo ->
-        return if (hallazgo.entradaEnIngles) {
-            VivaEstado.Traduccion(
-                original = texto,
-                traducida = hallazgo.frase.es,
-                paraEscuchar = hallazgo.frase.en,
-                origen = VivaOrigen.BANCO
-            )
-        } else {
-            VivaEstado.Traduccion(
-                original = texto,
-                traducida = hallazgo.frase.en,
-                paraEscuchar = hallazgo.frase.en,
-                origen = VivaOrigen.BANCO
-            )
-        }
-    }
+    // Tier 1: the curated bank — its hand-written renderings win.
+    buscarEnBanco(texto)?.let { return traduccionDeBanco(texto, it) }
+    // Tier 2: the big lexicon, once it has loaded.
+    buscarEnLexico(texto)?.let { return traduccionDeBanco(texto, it) }
 
     if (clave.isBlank() || peticion == null) {
         return VivaEstado.Aviso(VivaFallo.NECESITA_CLAVE)
