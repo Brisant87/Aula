@@ -13,8 +13,8 @@ android {
     applicationId = "com.aula.nativeapp"
     minSdk = 24
     targetSdk = 36
-    versionCode = 18
-    versionName = "0.18"
+    versionCode = 19
+    versionName = "0.19"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -79,6 +79,11 @@ dependencies {
   implementation(files("libs/sherpa-onnx.aar"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   testImplementation("junit:junit:4.13.2")
+  // The real org.json for local unit tests only (the Android stub
+  // throws off-device): Traducción Viva's response parsing is
+  // pinned against fixture JSON. Test classpath only — the APK
+  // keeps using the framework's org.json, nothing new ships.
+  testImplementation("org.json:json:20240303")
 }
 
 // Unit-test gate discipline (mirrors the Cognata donor): the CI workflow runs
