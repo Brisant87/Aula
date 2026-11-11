@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.aula.nativeapp.TraduccionVivaTest" tests="20" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:01:36.850Z" hostname="htch-runtime" time="0.174">
+  <properties/>
+  <testcase name="bank lookup answers in reverse from the english side" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.092"/>
+  <testcase name="resolver maps network failure to the retry state" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.003"/>
+  <testcase name="resolver translates spanish to english through the cloud" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.012"/>
+  <testcase name="resolver translates english input back to spanish and keeps english for audio" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.001"/>
+  <testcase name="resolver flags empty input" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="parses a detected english response" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="resolver never invents a translation on malformed cloud json" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.001"/>
+  <testcase name="unknown phrases miss the bank" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="normalization collapses and trims" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="bank lookup ignores case accents punctuation and extra spaces" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.001"/>
+  <testcase name="malformed or empty responses parse to null" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="resolver answers bank hits with no key and no cloud call" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.051"/>
+  <testcase name="resolver maps other http errors to the retry state" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.004"/>
+  <testcase name="resolver maps http 403 to the api not enabled state" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="parses a successful spanish to english response" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.001"/>
+  <testcase name="the classic non literal pairs are in the bank" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.002"/>
+  <testcase name="resolver speaks the english side when the bank answers in reverse" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="http failure mapping pins 403 apart from the rest" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <testcase name="bank size is pinned and well formed" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.001"/>
+  <testcase name="resolver asks for the key on a bank miss without one" classname="com.aula.nativeapp.TraduccionVivaTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
