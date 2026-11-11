@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,8 +34,10 @@ import kotlinx.coroutines.withContext
  * answers with how it is really said, with voice.
  *
  * Honesty rules, same as everywhere in Aula:
- *  - the bank answers first, offline and without any key;
- *  - outside the bank, the learner's own Google Cloud key does
+ *  - the banks answer first, offline and without any key (the
+ *    curated phrases, then the big lexicon, which loads in the
+ *    background when the tool opens);
+ *  - outside the banks, the learner's own Google Cloud key does
  *    the translating (the same key as the cloud voice);
  *  - a failure shows a plain message and NEVER an invented
  *    translation;
@@ -50,12 +54,21 @@ fun TraduccionScreen(
     var estado by remember { mutableStateOf<VivaEstado?>(null) }
     var cargando by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // The big lexicon loads once, in the background, the first
+    // time the tool opens: parsing it must never block the screen.
+    // Until it lands, its lookups simply miss (see BancoLexico).
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) { BancoLexico.cargar(context) }
+    }
 
     fun traducir() {
         val texto = entrada
         val clave = voiceKeys.get()
         val necesitaNube = texto.isNotBlank() &&
             buscarEnBanco(texto) == null &&
+            buscarEnLexico(texto) == null &&
             clave.isNotBlank()
         if (!necesitaNube) {
             // Bank hit, empty input or missing key: all instant,
@@ -101,7 +114,7 @@ fun TraduccionScreen(
                 enabled = !cargando
             ) { traducir() }
             Spacer(Modifier.height(6.dp))
-            NoteText("El banco de frases de la profesora responde al instante, sin internet y sin clave: son las frases de cada día, dichas como las dice la gente.")
+            NoteText("El banco de la profesora responde al instante, sin internet y sin clave: las frases de cada día y miles de palabras más, dichas como las dice la gente.")
         }
         Spacer(Modifier.height(14.dp))
 
