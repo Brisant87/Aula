@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.aula.nativeapp.LocalAsrPcmTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-10T14:44:11.906Z" hostname="htch-runtime" time="0.066">
+<testsuite name="com.aula.nativeapp.LocalAsrPcmTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:04:56.615Z" hostname="htch-runtime" time="0.005">
   <properties/>
-  <testcase name="raw pcm decodes little endian samples scaled to unit range" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.001"/>
-  <testcase name="wav input skips the header and decodes only the data chunk" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.063"/>
-  <testcase name="wav with an extra chunk before data still finds the payload" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.0"/>
+  <testcase name="raw pcm decodes little endian samples scaled to unit range" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.0"/>
+  <testcase name="wav input skips the header and decodes only the data chunk" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.001"/>
+  <testcase name="wav with an extra chunk before data still finds the payload" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.001"/>
   <testcase name="empty and truncated inputs decode to no samples" classname="com.aula.nativeapp.LocalAsrPcmTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
