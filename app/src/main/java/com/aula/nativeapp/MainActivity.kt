@@ -309,7 +309,7 @@ fun AulaApp(store: MirrorStore, settings: SettingsStore, tts: TtsManager, voiceK
                     "hoy" -> HoyScreen(store, settings, tts, bump) { tab = "espejo" }
                     "espejo" -> EspejoScreen(store, settings, tts, bump)
                     "conversaciones" -> ConversacionesScreen(store, settings, tts, bump)
-                    "biblioteca" -> BibliotecaScreen(store, settings, tts, bump)
+                    "biblioteca" -> BibliotecaScreen(store, settings, tts, voiceKeys, bump)
                     "camino" -> CaminoScreen(store, settings, tts, bump)
                     "ajustes" -> AjustesScreen(store, settings, voiceKeys, tts, bump)
                 }
@@ -2548,12 +2548,14 @@ fun BibliotecaScreen(
     store: MirrorStore,
     settings: SettingsStore,
     tts: TtsManager,
+    voiceKeys: VoiceKeyStore,
     bump: () -> Unit
 ) {
     var wordKey by remember { mutableStateOf<String?>(null) }
     var ruleKey by remember { mutableStateOf<String?>(null) }
     var ruleQ by remember { mutableStateOf<Cognate?>(null) }
     var showLab by remember { mutableStateOf(false) }
+    var showTraductor by remember { mutableStateOf(false) }
     val di = remember { Dates.dayIndex() }
     val dayWord = remember { COGNATES[di % COGNATES.size] }
 
@@ -2564,6 +2566,17 @@ fun BibliotecaScreen(
                 .padding(16.dp)
         ) {
             LabScreen(store, tts, bump, onBack = { showLab = false })
+        }
+        return
+    }
+
+    if (showTraductor) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            TraduccionScreen(tts, voiceKeys, onBack = { showTraductor = false })
         }
         return
     }
@@ -2582,6 +2595,15 @@ fun BibliotecaScreen(
             Text("Series cortas de pronunciación: pares que se confunden, el sonido TH, los finales -ed y frases que se pegan — cada pieza con su toma medida y un solo arreglo.")
             Spacer(Modifier.height(10.dp))
             PrimaryButton("Entrar al Laboratorio →", olive = true) { showLab = true }
+        }
+        Spacer(Modifier.height(14.dp))
+
+        JournalCard {
+            Stamp("Traducción Viva")
+            Spacer(Modifier.height(8.dp))
+            Text("¿Quieres decir algo y no sabes cómo suena de verdad? Escríbelo —en español o en inglés— y la profesora te lo devuelve como lo dice la gente, con su voz: «tengo sueño» es «I'm sleepy», no una traducción palabra por palabra.")
+            Spacer(Modifier.height(10.dp))
+            PrimaryButton("Traducir una frase →", olive = true) { showTraductor = true }
         }
         Spacer(Modifier.height(14.dp))
 
@@ -3316,11 +3338,13 @@ fun AjustesScreen(
         Spacer(Modifier.height(14.dp))
 
         JournalCard {
-            Text("Aula · versión nativa 0.15", style = MaterialTheme.typography.titleMedium)
+            Text("Aula · versión nativa 0.19", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             NoteText("La voz IA es opcional y usa tu propia clave de Google (la misma de PuenteLingua y Cognata); sin clave, todo sigue en el teléfono. Copia graba tu voz y la revisa en el propio teléfono: la grabación no sale de este dispositivo.")
             Spacer(Modifier.height(6.dp))
             NoteText("El oído propio: si el reconocedor del teléfono no transcribe nada, Aula puede escuchar tu grabación con su propio motor de voz, dentro del teléfono y sin internet. Cuando lo usa, te lo dice en la misma respuesta.")
+            Spacer(Modifier.height(6.dp))
+            NoteText("Traducción Viva (en la Biblioteca): las frases de su banco se traducen en el propio teléfono y nunca salen de él. Solo si escribes una frase que no está en el banco y tienes tu clave guardada, esa frase se envía a Google Cloud Translation para traducirla, con la misma clave de la voz IA; sin clave, Traducción Viva se queda en el banco.")
             Spacer(Modifier.height(6.dp))
             Text("Créditos de código abierto", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
